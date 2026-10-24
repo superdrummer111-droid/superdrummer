@@ -1,3 +1,4 @@
+const koreaDateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
 export const statuses={ACCEPT:'결제완료',INSTRUCT:'상품준비중',DEPARTURE:'배송지시',DELIVERING:'배송중',FINAL_DELIVERY:'배송완료',NONE_TRACKING:'업체 직접 배송'};
 export const money=value=>typeof value==='object'&&value!==null?Number(value.units??0)+Number(value.nanos??0)/1e9:Number(value??0);
 // Preserve unsafe integer identifiers while leaving quoted text and normal amounts untouched.
@@ -10,13 +11,19 @@ export function parseApiJson(text){
  }
  return JSON.parse(output);
 }
-export function marketDateRanges(from,to){dateRange(from,to);const dates=[];for(let day=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');day<=end;day+=86400000){const date=new Date(day).toISOString().slice(0,10);dates.push(dateRange(date,date))}return dates;}
+export function validateRange(from,to){
+ const valid=value=>/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+ if(!valid(from)||!valid(to)||from>to)throw new Error('올바른 시작일과 종료일을 선택하세요.');
+}
+export function splitDateRanges(from,to,maxDays=31){
+ validateRange(from,to);const ranges=[];let cursor=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');
+ while(cursor<=end){const day=new Date(cursor),monthEnd=Date.UTC(day.getUTCFullYear(),day.getUTCMonth()+1,0);const until=Math.min(end,monthEnd,cursor+(maxDays-1)*86400000);ranges.push({from:new Date(cursor).toISOString().slice(0,10),to:new Date(until).toISOString().slice(0,10)});cursor=until+86400000;}
+ return ranges;
+}
+export function marketDateRanges(from,to){return splitDateRanges(from,to,31).map(range=>dateRange(range.from,range.to));}
 export function orderSummary(rows){const currencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total)}return {rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
 export function rocketListPath(vendorId){if(!/^[A-Za-z0-9_-]+$/.test(vendorId))throw new Error('판매자 ID를 확인하세요.');return `/v2/providers/rg_open_api/apis/api/v1/vendors/${vendorId}/rg/orders`;}
-export function rocketDateRanges(from,to){
- dateRange(from,to);const ranges=[];let cursor=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');
- while(cursor<=end){const until=Math.min(cursor+29*86400000,end);ranges.push({paidDateFrom:new Date(cursor).toISOString().slice(0,10).replaceAll('-',''),paidDateTo:new Date(until).toISOString().slice(0,10).replaceAll('-','')});cursor=until+86400000;}return ranges;
-}
+export function rocketDateRanges(from,to){return splitDateRanges(from,to,30).map(range=>({paidDateFrom:range.from.replaceAll('-',''),paidDateTo:range.to.replaceAll('-','')}));}
 export function paymentTime(value){if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('결제 타임스탬프가 올바르지 않습니다.');return new Date(value).toISOString();}return String(value??'');}
 export function paymentDate(value){
  if(!value)return '';
@@ -24,11 +31,11 @@ export function paymentDate(value){
  const text=paymentTime(value).trim().replace(' ','T');
  const date=new Date(/(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)?text:text+'+09:00');
  if(Number.isNaN(date.getTime()))return '';
- return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(date);
+ return koreaDateFormatter.format(date);
 }
 export function dashboardRows(rows,{currency,from='',to=''}){
  if(from&&to&&from>to)throw new Error('결제일 종료일은 시작일보다 빠를 수 없습니다.');
- return rows.filter(row=>row.currency===currency&&(!from||paymentDate(row.paidAt)>=from)&&(!to||(paymentDate(row.paidAt)!==''&&paymentDate(row.paidAt)<=to)));
+ return rows.filter(row=>{if(row.currency!==currency)return false;const day=paymentDate(row.paidAt);return (!from||day>=from)&&(!to||(day!==''&&day<=to));});
 }
 export function normalize(orders,platform){return orders.flatMap(order=>(order.orderItems??[]).map((item,index)=>{
  const rg=platform==='로켓그로스',quantity=rg?Number(item.salesQuantity):item.canceled?0:Math.max(0,Number(item.shippingCount??0)-Number(item.cancelCount??0)-Number(item.holdCountForCancel??0));

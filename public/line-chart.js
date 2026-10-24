@@ -1,0 +1,12 @@
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function lineChart({labels,series,formatValue,title}){
+ const width=960,height=250,left=85,right=26,top=20,bottom=43,plotWidth=width-left-right,plotHeight=height-top-bottom;
+ const observed=series.flatMap(s=>s.values.filter(v=>v!=null));if(!observed.length)return '<div class="chart-empty">조회된 기간 데이터가 없습니다. 매출을 조회하세요.</div>';
+ const max=Math.max(...observed,1),x=i=>left+(labels.length>1?i/(labels.length-1):.5)*plotWidth,y=value=>top+plotHeight-value/max*plotHeight;
+ const ticks=Array.from({length:5},(_,i)=>{const value=max*i/4,py=y(value);return `<line x1="${left}" y1="${py}" x2="${width-right}" y2="${py}" stroke="#e9edf6"/><text x="${left-12}" y="${py+4}" text-anchor="end">${esc(formatValue(value))}</text>`}).join('');
+ const stride=Math.max(1,Math.ceil(labels.length/8));
+ const axis=labels.map((label,i)=>i%stride===0||i===labels.length-1?`<text x="${x(i)}" y="${height-13}" text-anchor="${i===0?'start':i===labels.length-1?'end':'middle'}">${esc(label)}</text>`:'').join('');
+ const palette=['#6658e5','#16b49f'];
+ const lines=series.map((s,index)=>{let path='',drawing=false;for(let i=0;i<s.values.length;i++){const value=s.values[i];if(value==null){drawing=false;continue}path+=(drawing?' L':' M')+x(i)+' '+y(value);drawing=true}return `<path d="${path}" fill="none" stroke="${palette[index%palette.length]}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`+s.values.map((value,i)=>value==null?'':`<circle cx="${x(i)}" cy="${y(value)}" r="4" fill="${palette[index%palette.length]}" stroke="white" stroke-width="2"><title>${esc(s.name)} · ${esc(labels[i])} · ${esc(formatValue(value))}</title></circle>`).join('')}).join('');
+ return `<div class="line-legend">${series.map((s,i)=>`<span><i style="background:${palette[i%palette.length]}"></i>${esc(s.name)}</span>`).join('')}</div><div class="line-svg"><svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(title)}"><title>${esc(title)}</title><g>${ticks}${axis}${lines}</g></svg></div><details class="line-data"><summary>기간별 금액 보기</summary><div class="table-wrap"><table><thead><tr><th>기간</th>${series.map(s=>`<th class="numeric">${esc(s.name)}</th>`).join('')}</tr></thead><tbody>${labels.map((label,i)=>`<tr><td>${esc(label)}</td>${series.map(s=>`<td class="numeric">${s.values[i]==null?'미조회 / 해당 없음':esc(formatValue(s.values[i]))}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`;
+}
