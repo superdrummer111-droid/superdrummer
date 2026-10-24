@@ -1,10 +1,10 @@
 import {aggregateMerchandise,productProfile,productIdentity,CATEGORIES} from './merchandising.js';
 import {initializeRangeCalendar} from './range-calendar.js';
-import {statuses,normalize,aggregate,authorization,pages,dateRange,rocketListPath,rocketDateRanges,dashboardRows,paymentDate} from './core.js';
+import {statuses,normalize,aggregate,authorization,pages,dateRange,rocketListPath,rocketDateRanges,dashboardRows,paymentDate,parseApiJson,marketDateRanges,orderSummary} from './core.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2}).format(n);
 const amount=(n,c=$('currency').value)=>new Intl.NumberFormat('ko-KR',{style:'currency',currency:c,maximumFractionDigits:c==='KRW'?0:2}).format(n);
-let rows=[],source='market',busy=false,loadedVendor='';
+let rows=[],source='market',busy=false,loadedVendor='',marketCoverage=null;
 const labels={platform:'판매 채널',orderId:'주문번호',productName:'상품명',vendorItemId:'옵션 ID',quantity:'유효 수량',price:'판매 단가',revenue:'상품 매출',currency:'통화',paidAt:'결제일시',status:'상태',shipmentBoxId:'배송번호',sku:'판매자 SKU',cancelCount:'취소 수량',holdCountForCancel:'환불대기 수량',receiver:'수취인',address:'배송지',invoiceNumber:'운송장번호',raw:'원본 주문 / 상품 JSON'};
 const rawLabels={vendorId:'판매자 ID',shipmentBoxId:'배송번호',orderId:'주문번호',orderedAt:'주문일시',paidAt:'결제일시',status:'발주서 상태',orderer:'주문자',receiver:'수취인',name:'이름',email:'이메일',safeNumber:'안심번호',ordererNumber:'주문자 전화번호',receiverNumber:'수취인 전화번호',addr1:'기본 주소',addr2:'상세 주소',postCode:'우편번호',consigneePrimaryAddress:'우편번호 기준 주소',shippingPrice:'배송비',remotePrice:'도서산간 배송비',currencyCode:'통화 코드',currency:'통화',units:'정수 금액',nanos:'소수 금액',remoteArea:'도서산간 여부',parcelPrintMessage:'배송 메시지',splitShipping:'분리배송 여부',ableSplitShipping:'분리배송 가능 여부',sequenceNo:'상품 일련번호',vendorItemPackageId:'옵션 패키지 ID',vendorItemPackageName:'옵션 패키지명',productId:'상품 ID',vendorItemId:'옵션 ID',vendorItemName:'노출 상품명',productName:'상품명',shippingCount:'주문 수량',salesQuantity:'판매 수량',unitSalesPrice:'판매 단가',salesPrice:'판매 단가',orderPrice:'주문 금액',discountPrice:'총 할인 금액',instantCouponDiscount:'즉시할인 쿠폰 금액',downloadableCouponDiscount:'다운로드 쿠폰 금액',coupangDiscount:'쿠팡 지원 할인 금액',externalVendorSkuCode:'판매자 SKU',etcInfoHeader:'개별 입력 항목',etcInfoValue:'개별 입력값',etcInfoValues:'개별 입력값 목록',sellerProductId:'등록 상품 ID',sellerProductName:'등록 상품명',sellerProductItemName:'등록 옵션명',firstSellerProductItemName:'최초 등록 옵션명',cancelCount:'취소 수량',holdCountForCancel:'환불대기 수량',estimatedShippingDate:'주문 시 출고예정일',plannedShippingDate:'실제 출고예정일',invoiceNumberUploadDate:'운송장 등록일시',extraProperties:'추가 정보',pricingBadge:'최저가 상품 여부',usedProduct:'중고 상품 여부',confirmDate:'구매확정일',deliveryChargeTypeName:'배송비 구분',productCategoryLevel1:'상품 대분류',productCategoryLevel2:'상품 중분류',productSalesPageUrl:'상품 판매 주소',upBundleVendorItemId:'자동생성 옵션 ID',upBundleVendorItemName:'자동생성 옵션명',upBundleSize:'자동생성 옵션 수량',upBundleItem:'자동생성 옵션 여부',canceled:'취소 여부',overseaShippingInfoDto:'해외배송 정보',personalCustomsClearanceCode:'개인통관 고유부호',orderersSsn:'주문자 식별번호',ordererSsn:'주문자 식별번호',ordererPhoneNumber:'통관용 전화번호',oneTimePccc:'일회용 개인통관 부호',otpNumber:'통관 인증번호',deliveryCompanyName:'택배사',invoiceNumber:'운송장번호',inTrasitDateTime:'출고일시',deliveredDate:'배송완료일',refer:'주문 경로',shipmentType:'배송 유형',isCod:'착불 여부',ecommerceTypeCode:'전자상거래 유형',tradePartnerCode:'중개업체 코드',tradePartnerName:'중개업체명',seller:'판매자 정보',sellerName:'판매자명',sellerId:'판매자 ID',purchasingAgencyCode:'조달기관 코드',purchasingAgencyName:'조달기관명',sameDayShipping:'당일배송 여부',cutOffTimeHour:'당일배송 마감시간'};
 function columnLabel(key){if(labels[key])return labels[key];const parts=key.split('.');return parts.map((part,index)=>index===0?(part==='order'?'주문 정보':part==='item'?'상품 정보':rawLabels[part]||'추가 필드'):rawLabels[part]||'추가 필드').join(' · ')}
@@ -26,16 +26,20 @@ function syncRangeLabels(){for(const [id,from,to]of [['dashboard-range','dash-fr
 syncRangeLabels();
 initializeRangeCalendar({dialog:$('calendar-dialog'),triggers:{dashboard:$('dashboard-range'),orders:$('orders-range')},onApply:(target,from,to)=>{const ids=target==='dashboard'?['dash-from','dash-to']:['from','to'];$(ids[0]).value=from;$(ids[1]).value=to;syncRangeLabels();if(target==='dashboard')renderDashboard();}});
 document.querySelectorAll('.source').forEach(el=>el.onclick=()=>{if(busy)return;source=el.dataset.source;document.querySelectorAll('.source').forEach(b=>b.classList.toggle('active',b===el));$('status-field').hidden=source!=='market';$('rg-fields').hidden=source!=='rg'});
-async function api(path,params){const query=new URLSearchParams(params).toString(),auth=await authorization($('access').value.trim(),$('secret').value.trim(),path,query);const response=await fetch('/api/coupang',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,query,authorization:auth})});let data;try{data=await response.json()}catch{throw new Error('서버 응답을 해석할 수 없습니다.')};if(!response.ok||data.code!==undefined&&!['200','SUCCESS','0'].includes(String(data.code)))throw new Error(`API ${response.status}: ${data.message||'인증과 요청 조건을 확인하세요.'}`);return data}
+async function api(path,params){const query=new URLSearchParams(params).toString(),auth=await authorization($('access').value.trim(),$('secret').value.trim(),path,query);const response=await fetch('/api/coupang',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,query,authorization:auth})});let data;try{data=parseApiJson(await response.text())}catch{throw new Error('서버 응답을 해석할 수 없습니다.')};if(!response.ok||data.code!==undefined&&!['200','SUCCESS','0'].includes(String(data.code)))throw new Error(`API ${response.status}: ${data.message||'인증과 요청 조건을 확인하세요.'}`);return data}
 function credentialsReady(){
  if(!/^[A-Za-z0-9_-]+$/.test($('vendor').value.trim())||!$('access').value.trim()||!$('secret').value.trim()){notice('API 연결 설정에 판매자 ID와 두 인증키를 입력하세요.',true);view('settings');return false}
  if(!crypto.subtle){notice('브라우저 서명 기능을 사용하려면 HTTPS 또는 localhost로 접속하세요.',true);return false}return true;
 }
 function setBusy(value){busy=value;for(const id of ['fetch-orders','dashboard-refresh','dashboard-range','orders-range'])$(id).disabled=value;$('fetch-orders').textContent=value?'조회 중…':'주문 조회 →';$('dashboard-refresh').textContent=value?'조회 중…':'매출 조회';}
 async function loadMarket(vendor,from,to,status='ALL'){
- const range=dateRange(from,to),selected=status==='ALL'?Object.keys(statuses):[status],orders=[];
- for(const status of selected)orders.push(...await pages(token=>api(`/v2/providers/openapi/apis/api/v5/vendors/${vendor}/ordersheets`,{...range,status,maxPerPage:'50',...(token?{nextToken:token}:{})}),count=>notice(`${statuses[status]} 조회 중 · ${count}개 발주서 수신`)));
- return orders;
+ const ranges=marketDateRanges(from,to),selected=status==='ALL'?Object.keys(statuses):[status],orders=[];let pageCount=0;
+ for(const range of ranges)for(const status of selected){
+  const day=range.createdAtFrom.slice(0,10);
+  orders.push(...await pages(async token=>{pageCount++;return api(`/v2/providers/openapi/apis/api/v5/vendors/${vendor}/ordersheets`,{...range,status,maxPerPage:'50',...(token?{nextToken:token}:{})})},count=>notice(`${day} · ${statuses[status]} · ${count}개 발주서 수신 · ${pageCount}페이지 요청`)));
+ }
+ const report={from,to,days:ranges.length,statuses:selected.length,pages:pageCount,received:orders.length,orders:new Set(orders.map(o=>String(o.orderId))).size,shipments:new Set(orders.map(o=>String(o.shipmentBoxId??o.orderId))).size};
+ return {orders,report};
 }
 let lastRocketRequest=0;
 async function loadRocket(vendor,from,to){
@@ -58,7 +62,7 @@ function prepareRows(orders,platform){return normalize(orders,platform).map(row=
 })}
 function commitOrders(vendor,batches,replace=false){
  const incoming=batches.flatMap(batch=>prepareRows(batch.orders,batch.platform));
- let kept=replace||loadedVendor!==vendor?[]:rows;
+ if(loadedVendor!==vendor)marketCoverage=null;let kept=replace||loadedVendor!==vendor?[]:rows;
  for(const batch of batches){const ids=new Set([...batch.orders.map(o=>String(o.orderId)),...(batch.requestedIds||[])]);kept=kept.filter(r=>r.platform!==batch.platform||!ids.has(r.orderId));}
  const map=new Map([...kept,...incoming].map(row=>[row.id,row]));
  rows=[...map.values()];loadedVendor=vendor;render();return incoming.length;
@@ -67,10 +71,10 @@ $('query').onsubmit=async e=>{
  e.preventDefault();if(busy||!credentialsReady())return;
  const vendor=$('vendor').value.trim();setBusy(true);
  try{
-  const platform=source==='market'?'마켓플레이스':'로켓그로스';let orders;
-  if(source==='market')orders=await loadMarket(vendor,$('from').value,$('to').value,$('status').value);
+  const platform=source==='market'?'마켓플레이스':'로켓그로스';let orders,report;
+  if(source==='market'){const result=await loadMarket(vendor,$('from').value,$('to').value,$('status').value);orders=result.orders;report=result.report;}
   else orders=await loadRocket(vendor,$('from').value,$('to').value);
-  const count=commitOrders(vendor,[{platform,orders}]);
+  const count=commitOrders(vendor,[{platform,orders}]);if(report)marketCoverage=report;$('row-platform').value=platform;$('row-search').value='';renderOrders();
   // The dashboard follows the newly queried population instead of retaining stale date filters.
   $('dash-from').value=$('from').value;$('dash-to').value=$('to').value;syncRangeLabels();
   const currencies=[...new Set(normalize(orders,platform).map(r=>r.currency))];if(currencies.length===1)$('currency').value=currencies[0];renderDashboard();
@@ -81,22 +85,32 @@ $('dashboard-refresh').onclick=async()=>{
  if(busy||!credentialsReady())return;const vendor=$('vendor').value.trim();setBusy(true);
  try{
   dateRange($('dash-from').value,$('dash-to').value);
-  const market=await loadMarket(vendor,$('dash-from').value,$('dash-to').value);
+  const marketResult=await loadMarket(vendor,$('dash-from').value,$('dash-to').value),market=marketResult.orders;
   const rocket=await loadRocket(vendor,$('dash-from').value,$('dash-to').value);
   commitOrders(vendor,[{platform:'마켓플레이스',orders:market},{platform:'로켓그로스',orders:rocket}],true);
-  const available=[...new Set(rows.map(r=>r.currency))];if(available.length===1)$('currency').value=available[0];renderDashboard();
+  marketCoverage=marketResult.report;renderOrders();const available=[...new Set(rows.map(r=>r.currency))];if(available.length===1)$('currency').value=available[0];renderDashboard();
   notice(`매출 조회 완료 · 마켓플레이스 ${market.length}개 발주서 · 로켓그로스 ${rocket.length}개 주문. 이번 조회 결과로 집계를 교체했습니다.`);
  }catch(error){notice(error.message+' 이번 매출 조회 결과는 반영하지 않았습니다. 기존 집계를 유지합니다.',true)}finally{setBusy(false)}
 };
 function visibleRows(){const q=$('row-search').value.toLowerCase();return rows.filter(r=>(!$('row-platform').value||r.platform===$('row-platform').value)&&(!q||[r.productName,r.orderId,r.vendorItemId].some(v=>v.toLowerCase().includes(q))))}
-function renderOrders(){const data=visibleRows(),selected=columns.filter(c=>c.visible);$('row-count').textContent=data.length;$('order-head').innerHTML='<tr>'+selected.map(c=>`<th>${esc(columnLabel(c.key))}<small class="field-name">${esc(columnEnglish(c.key))}</small></th>`).join('')+'</tr>';$('order-body').innerHTML=data.length?data.map(row=>'<tr>'+selected.map(c=>`<td class="${['quantity','price','revenue'].includes(c.key)?'numeric':''}">${esc(['price','revenue'].includes(c.key)?amount(row[c.key],row.currency):row[c.key])}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${selected.length}" class="empty">조회된 주문이 없습니다. 인증 정보를 설정하고 주문을 불러오세요.</td></tr>`}
+function renderOrders(){
+ const data=visibleRows(),selected=columns.filter(c=>c.visible),summary=orderSummary(data),total=orderSummary(rows);
+ $('row-count').textContent=`${data.length} / ${rows.length}행`;
+ const currencyTotals=[...summary.currencies].map(([currency,value])=>`<span class="order-sum-money"><small>${esc(currency)} 금액 합계</small><strong>${esc(amount(value.revenue,currency))}</strong></span>`).join('');
+ $('order-summary').innerHTML=`<span><small>표시 주문 / 전체 주문</small><strong>${fmt(summary.orders)} / ${fmt(total.orders)}<em>건</em></strong></span><span><small>표시 상품 행</small><strong>${fmt(summary.rows)}<em>행</em></strong></span><span><small>수량 합계 · 취소 제외</small><strong>${fmt(data.reduce((sum,row)=>sum+row.quantity,0))}<em>개</em></strong></span>${currencyTotals||'<span><small>금액 합계</small><strong>0</strong></span>'}`;
+ $('query-coverage').textContent=(marketCoverage?`마켓플레이스 ${marketCoverage.from} ~ ${marketCoverage.to} · ${marketCoverage.days}일 × ${marketCoverage.statuses}개 상태 · ${marketCoverage.pages}페이지 완료 · 고유 주문 ${marketCoverage.orders}건 / 배송 ${marketCoverage.shipments}건 · `:'')+'합계는 현재 채널·검색 필터 기준입니다. 금액은 상품 단가 × 취소 제외 수량이며 할인·배송비는 미반영입니다. 반품완료 건은 발주서 API에서 제공하지 않습니다.';
+ $('order-head').innerHTML='<tr>'+selected.map(c=>`<th>${esc(columnLabel(c.key))}<small class="field-name">${esc(columnEnglish(c.key))}</small></th>`).join('')+'</tr>';
+ $('order-body').innerHTML=!selected.length?'<tr><td class="empty">컬럼 선택에서 표시할 컬럼을 추가하세요.</td></tr>':data.length?data.map(row=>'<tr>'+selected.map(c=>`<td class="${['quantity','price','revenue'].includes(c.key)?'numeric':''}">${esc(['price','revenue'].includes(c.key)?amount(row[c.key],row.currency):row[c.key])}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${selected.length}" class="empty">조회된 주문이 없습니다. 인증 정보를 설정하고 주문을 불러오세요.</td></tr>`;
+ $('order-foot').innerHTML=selected.length?'<tr>'+selected.map((c,index)=>`<td class="${['quantity','revenue'].includes(c.key)?'numeric':''}">${c.key==='quantity'?fmt(data.reduce((sum,row)=>sum+row.quantity,0)):c.key==='revenue'?[...summary.currencies].map(([currency,value])=>esc(amount(value.revenue,currency))).join('<br>'):index===0?'합계':''}</td>`).join('')+'</tr>':'';
+}
 let productOverrides=readStorage('sb-product-overrides',{});
 if(!productOverrides||typeof productOverrides!=='object'||Array.isArray(productOverrides))productOverrides={};
-function renderPie(entries,total){
- if(!total)return '<div class="chart-empty">조회된 매출이 없습니다.</div>';
- const colors=['#6366f1','#10b5a0','#f2ad43','#a0a8b7'];let cursor=0;
- const segments=entries.map(([name,value],index)=>{const start=cursor;cursor+=value/total*100;return `${colors[index%colors.length]} ${start}% ${cursor}%`});
- return `<div class="pie-layout"><div class="donut" role="img" aria-label="${esc(entries.map(([name,value])=>name+' '+amount(value)+' '+(value/total*100).toFixed(1)+'%').join(', '))}" style="background:conic-gradient(${segments.join(',')})"><div><small>상품 매출</small><strong class="donut-amount">${esc(amount(total))}</strong></div></div><div class="legend">${entries.map(([name,value],index)=>`<div><span><i style="background:${colors[index%colors.length]}"></i>${esc(name)}</span><strong class="legend-revenue">${esc(amount(value))}</strong><small class="legend-share">${(value/total*100).toFixed(1)}%</small></div>`).join('')}</div></div>`;
+const SERIES_COLORS={channel:{'마켓플레이스':'#6656e8','로켓그로스':'#0fbaa2'},category:{'사료':'#f3a345','영양제':'#637ae8','세정제':'#e979a3','미분류':'#a1a9bc'},brand:{'뉴앤힐':'#5475ee','뉴트리탑':'#0eaf9e','기타 / 미분류':'#a1a9bc'}};
+function seriesColor(name,kind){if(SERIES_COLORS[kind]?.[name])return SERIES_COLORS[kind][name];let hash=0;for(const char of name)hash=(hash*31+char.codePointAt(0))>>>0;return `hsl(${hash%360} 64% 56%)`}
+function renderPie(entries,total,kind){
+ let cursor=0;const segments=entries.map(([name,value])=>{const start=cursor;cursor+=total?value/total*100:0;return `${seriesColor(name,kind)} ${start}% ${cursor}%`});
+ const description=entries.map(([name,value])=>`${name} ${amount(value)} ${total?(value/total*100).toFixed(1):'0.0'}%`).join(', ');
+ return `<div class="modern-donut-wrap"><div class="modern-donut" role="img" aria-label="${esc(description||'조회된 매출 없음')}" style="background:${total?'conic-gradient('+segments.join(',')+')':'#eceef5'}"><div><small>상품 매출</small><strong>${esc(amount(total))}</strong><span>${total?'전체 100%':'데이터 없음'}</span></div></div></div><table class="chart-label-table"><thead><tr><th>분류명</th><th class="numeric">금액</th><th class="numeric">점유율</th></tr></thead><tbody>${entries.length?entries.map(([name,value])=>`<tr><td><i style="background:${seriesColor(name,kind)}"></i><span>${esc(name)}</span></td><td class="numeric">${esc(amount(value))}</td><td class="numeric">${total?(value/total*100).toFixed(1):'0.0'}<small>%</small></td></tr>`).join(''):'<tr><td colspan="3" class="empty">조회된 매출이 없습니다.</td></tr>'}</tbody></table>`;
 }
 function renderDashboard(){const cur=$('currency').value,from=$('dash-from').value,to=$('dash-to').value;let scoped;try{scoped=dashboardRows(rows,{currency:cur,from,to})}catch(error){$('dashboard-scope').textContent=error.message;return}const brandSelection=$('brand-filter').value,allBrands=[...new Set(scoped.map(row=>productProfile(row,productOverrides[productIdentity(row)]).brand))].sort();
  $('brand-filter').innerHTML='<option value="">전체 브랜드</option>'+allBrands.map(brand=>`<option value="${esc(brand)}">${esc(brand)}</option>`).join('');$('brand-filter').value=allBrands.includes(brandSelection)?brandSelection:'';
@@ -104,15 +118,15 @@ function renderDashboard(){const cur=$('currency').value,from=$('dash-from').val
  const a=aggregate(scoped),merch=aggregateMerchandise(scoped,productOverrides);
  const unknown=rows.filter(r=>!paymentDate(r.paidAt)).length;
  $('dashboard-scope').textContent=`현재 조회 ${rows.length}개 상품 행 중 ${scoped.length}행 집계 · ${cur} · ${from||'시작 제한 없음'} ~ ${to||'종료 제한 없음'} (한국 시간)${unknown?' · 결제일 미확인 '+unknown+'행은 날짜 필터 적용 시 제외':''} · 새로고침하면 데이터가 초기화됩니다.`;$('total-revenue').textContent=amount(a.revenue);$('total-quantity').innerHTML=fmt(merch.quantity)+'<em>개</em>';$('total-orders').innerHTML=fmt(a.orders)+'<em>건</em>';
- const channels=['마켓플레이스','로켓그로스'],values=channels.map(c=>a.platforms.get(c)||0),max=Math.max(...values,1),colors=['#6366f1','#10b5a0'];
- $('bar-chart').innerHTML=a.orders?`<div class="bars">${channels.map((name,i)=>`<div class="bar-row"><div class="bar-meta"><span><i style="background:${colors[i]}"></i>${name}</span><strong>${esc(amount(values[i]))}</strong></div><div class="track"><div style="width:${values[i]/max*100}%;background:${colors[i]}"></div></div></div>`).join('')}<div class="scale"><span>0</span><span>${esc(amount(max/2))}</span><span>${esc(amount(max))}</span></div></div>`:'<div class="chart-empty">주문을 불러오면 채널별 매출이 표시됩니다.</div>';
- $('pie-chart').innerHTML=renderPie(channels.map((name,i)=>[name,values[i]]),a.revenue);
- $('category-chart').innerHTML=renderPie([...merch.categories],a.revenue);
- const brandEntries=[...merch.brands].sort((a,b)=>b[1]-a[1]),brandMax=Math.max(...brandEntries.map(([,value])=>value),1);
- $('brand-chart').innerHTML=a.revenue?`<div class="bars brand-bars">${brandEntries.map(([brand,value])=>`<div class="bar-row"><div class="bar-meta"><span>${esc(brand)}</span><strong>${esc(amount(value))}</strong></div><div class="track"><div style="width:${value/brandMax*100}%;background:#6366f1"></div></div></div>`).join('')}</div>`:'<div class="chart-empty">조회된 브랜드 매출이 없습니다.</div>';
- const q=$('product-search').value.toLowerCase(),products=merch.products.filter(p=>[p.productName,p.brand,...[...p.variants.values()].flatMap(v=>[v.productName,v.vendorItemId])].some(v=>String(v).toLowerCase().includes(q)));
+ const channels=['마켓플레이스','로켓그로스'];
+ $('pie-chart').innerHTML=renderPie(channels.map(name=>[name,a.platforms.get(name)||0]),a.revenue,'channel');
+ $('category-chart').innerHTML=renderPie([...merch.categories],a.revenue,'category');
+ const brandEntries=[...merch.brands].sort((a,b)=>b[1]-a[1]);
+ $('brand-chart').innerHTML=renderPie(brandEntries,a.revenue,'brand');
+ const productMerch=aggregateMerchandise(scoped.filter(row=>!$('product-platform').value||row.platform===$('product-platform').value),productOverrides);
+ const q=$('product-search').value.toLowerCase(),products=productMerch.products.filter(p=>[p.productName,p.brand,...[...p.variants.values()].flatMap(v=>[v.productName,v.vendorItemId])].some(v=>String(v).toLowerCase().includes(q)));
  $('product-count').textContent=products.length;
- $('products').innerHTML=products.length?products.map(p=>`<tr><td><strong>${esc(p.productName)}</strong><small>${esc(p.brand)} · ${esc(p.category)}</small><details class="product-details"><summary>원본·분류 확인 (${p.variants.size}개 옵션)</summary><div class="variant-details">${[...p.variants.values()].map(v=>`<div class="variant-row"><div><strong>${esc(v.productName)}</strong><small>${esc(v.platform)} · ${esc(v.vendorItemId)} · 주문 ${fmt(v.quantity)} × 묶음 ${v.packSize} = 출고 ${fmt(v.units)}</small></div><label>브랜드<input data-override="brand" data-product="${esc(v.key)}" value="${esc(p.brand==='기타 / 미분류'?'':p.brand)}" placeholder="미분류"></label><label>세분류<select data-override="category" data-product="${esc(v.key)}">${CATEGORIES.map(c=>`<option ${c===p.category?'selected':''}>${c}</option>`).join('')}</select></label><label>묶음 수량<input type="number" min="1" max="999" step="1" data-override="packSize" data-product="${esc(v.key)}" value="${v.packSize}"></label></div>`).join('')}</div></details></td><td>${[...p.platforms].map(platform=>`<span class="channel ${platform==='로켓그로스'?'rg':''}">${esc(platform)}</span>`).join(' ')}</td><td class="numeric"><strong>${fmt(p.quantity)}</strong><small>주문 ${fmt(p.orderedQuantity)}</small></td><td class="numeric"><strong>${esc(amount(p.revenue))}</strong></td></tr>`).join(''):'<tr><td colspan="4" class="empty">표시할 판매 실적이 없습니다.</td></tr>';
+ $('products').innerHTML=products.length?products.map(p=>`<tr><td class="product-brand">${esc(p.brand)}</td><td><span class="item-label">${esc(p.category)}</span></td><td><strong>${esc(p.productName)}</strong><details class="product-details"><summary>원본·분류 확인 (${p.variants.size}개 옵션)</summary><div class="variant-details">${[...p.variants.values()].map(v=>`<div class="variant-row"><div><strong>${esc(v.productName)}</strong><small>${esc(v.platform)} · ${esc(v.vendorItemId)} · 주문 ${fmt(v.quantity)} × 묶음 ${v.packSize} = 출고 ${fmt(v.units)}</small></div><label>브랜드<input data-override="brand" data-product="${esc(v.key)}" value="${esc(p.brand==='기타 / 미분류'?'':p.brand)}" placeholder="미분류"></label><label>세분류<select data-override="category" data-product="${esc(v.key)}">${CATEGORIES.map(c=>`<option ${c===p.category?'selected':''}>${c}</option>`).join('')}</select></label><label>묶음 수량<input type="number" min="1" max="999" step="1" data-override="packSize" data-product="${esc(v.key)}" value="${v.packSize}"></label></div>`).join('')}</div></details></td><td>${[...p.platforms].map(platform=>`<span class="channel ${platform==='로켓그로스'?'rg':''}">${esc(platform)}</span>`).join(' ')}</td><td class="numeric"><strong>${fmt(p.quantity)}</strong><small>주문 ${fmt(p.orderedQuantity)}</small></td><td class="numeric"><strong>${esc(amount(p.revenue))}</strong></td></tr>`).join(''):'<tr><td colspan="6" class="empty">표시할 판매 실적이 없습니다.</td></tr>';
  $('products').querySelectorAll('[data-override]').forEach(input=>input.onchange=()=>{
   const key=input.dataset.product,field=input.dataset.override;let value=input.value.trim();
   if(field==='packSize'){value=Number(value);if(!Number.isInteger(value)||value<1||value>999){notice('묶음 수량은 1~999 사이 정수로 입력하세요.',true);renderDashboard();return}}
@@ -121,27 +135,38 @@ function renderDashboard(){const cur=$('currency').value,from=$('dash-from').val
 }
 
 function render(){const current=$('currency').value,currencies=[...new Set(['KRW',...rows.map(r=>r.currency)])];$('currency').innerHTML=currencies.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');$('currency').value=currencies.includes(current)?current:'KRW';renderOrders();renderDashboard()}
-for(const id of ['dash-from','dash-to','currency','product-search','brand-filter','category-filter'])$(id).addEventListener('input',renderDashboard);for(const id of ['row-platform','row-search'])$(id).addEventListener('input',renderOrders);
-$('clear-data').onclick=()=>{if(busy){notice('조회가 끝난 뒤 데이터를 비울 수 있습니다.',true);return}rows=[];render();notice('현재 탭의 조회 데이터를 비웠습니다.')};
+for(const id of ['dash-from','dash-to','currency','product-search','brand-filter','category-filter','product-platform'])$(id).addEventListener('input',renderDashboard);for(const id of ['row-platform','row-search'])$(id).addEventListener('input',renderOrders);
+$('clear-data').onclick=()=>{if(busy){notice('조회가 끝난 뒤 데이터를 비울 수 있습니다.',true);return}rows=[];marketCoverage=null;render();notice('현재 탭의 조회 데이터를 비웠습니다.')};
 function saveColumns(){store('order-desk-columns',columns);renderOrders()}
 let leftMarked=new Set(),rightMarked=new Set(),dragKey='';
 function reorderSelected(key,delta){const selected=columns.filter(c=>c.visible),index=selected.findIndex(c=>c.key===key),next=index+delta;if(index<0||next<0||next>=selected.length)return;const [column]=selected.splice(index,1);selected.splice(next,0,column);columns=[...selected,...columns.filter(c=>!c.visible)];saveColumns();renderColumns()}
+function addColumnKeys(keys){const selected=columns.filter(c=>c.visible),added=columns.filter(c=>!c.visible&&keys.has(c.key));added.forEach(c=>c.visible=true);columns=[...selected,...added,...columns.filter(c=>!c.visible)];leftMarked.clear();saveColumns();renderColumns()}
+function removeColumnKeys(keys){columns.forEach(c=>{if(keys.has(c.key))c.visible=false});rightMarked.clear();saveColumns();renderColumns()}
+const trashIcon='<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function matchingColumns(){const q=$('column-search').value.toLowerCase();return columns.filter(c=>[columnLabel(c.key),columnEnglish(c.key)].some(value=>value.toLowerCase().includes(q)))}
 function renderColumns(){
- const sample=visibleRows()[0]||rows[0],q=$('column-search').value.toLowerCase(),matches=c=>[columnLabel(c.key),columnEnglish(c.key)].some(value=>value.toLowerCase().includes(q));
+ const sample=visibleRows()[0]||rows[0],matches=matchingColumns();
  function option(column,right){const marked=(right?rightMarked:leftMarked).has(column.key),selected=columns.filter(c=>c.visible),index=selected.findIndex(c=>c.key===column.key),example=sample?sample[column.key]??'값 없음':'조회 후 예시 표시';
- return `<div class="transfer-option ${marked?'marked':''} ${!right&&column.visible?'included':''}" role="option" aria-selected="${marked}" tabindex="0" data-key="${esc(column.key)}" ${right?'draggable="true"':''}><span class="column-identity"><strong>${right?'⠿ ':''}${esc(columnLabel(column.key))}</strong><small>${esc(columnEnglish(column.key))}</small></span><span class="column-example" title="${esc(example)}">${esc(example)}</span>${right?`<span class="column-order"><button type="button" data-step="-1" aria-label="위로 이동" ${index===0?'disabled':''}>↑</button><button type="button" data-step="1" aria-label="아래로 이동" ${index===selected.length-1?'disabled':''}>↓</button></span>`:column.visible?'<span class="included-badge">선택됨</span>':''}</div>`;
+ return `<div class="transfer-option ${marked?'marked':''} ${!right&&column.visible?'included':''}" data-key="${esc(column.key)}" ${right?'draggable="true"':''}><input class="column-check" type="checkbox" aria-label="${esc(columnLabel(column.key))} ${right?'제거 선택':'추가 선택'}" ${marked||!right&&column.visible?'checked':''} ${!right&&column.visible?'disabled':''}><span class="column-identity"><strong>${right?'⠿ ':''}${esc(columnLabel(column.key))}</strong><small>${esc(columnEnglish(column.key))}</small></span><span class="column-example" title="${esc(example)}">${esc(example)}</span><button type="button" class="column-action ${right?'remove-column':'add-column'}" aria-label="${esc(columnLabel(column.key))} ${right?'삭제':'추가'}" ${!right&&column.visible?'disabled':''}>${right?trashIcon:'+'}</button>${right?`<span class="column-order"><button type="button" data-step="-1" aria-label="위로 이동" ${index===0?'disabled':''}>↑</button><button type="button" data-step="1" aria-label="아래로 이동" ${index===selected.length-1?'disabled':''}>↓</button></span>`:''}</div>`;
  }
  $('all-column-count').textContent=columns.length;$('selected-column-count').textContent=columns.filter(c=>c.visible).length;
- $('all-columns').innerHTML=columns.filter(matches).map(c=>option(c,false)).join('');$('selected-columns').innerHTML=columns.filter(c=>c.visible&&matches(c)).map(c=>option(c,true)).join('');
+ const scrolls=[$('all-columns').scrollTop,$('selected-columns').scrollTop];
+ $('all-columns').innerHTML=matches.map(c=>option(c,false)).join('');$('selected-columns').innerHTML=matches.filter(c=>c.visible).map(c=>option(c,true)).join('');
  for(const [id,right]of [['all-columns',false],['selected-columns',true]])$(id).querySelectorAll('.transfer-option').forEach(el=>{
   const toggle=()=>{const key=el.dataset.key;if(!right&&columns.find(c=>c.key===key).visible)return;const marked=right?rightMarked:leftMarked;marked.has(key)?marked.delete(key):marked.add(key);renderColumns()};
-  el.onclick=event=>{if(!event.target.closest('button'))toggle()};el.onkeydown=event=>{if(event.target===el&&(event.key===' '||event.key==='Enter')){event.preventDefault();toggle()}};
+  el.onclick=event=>{if(!event.target.closest('button')&&!event.target.closest('input'))toggle()};el.querySelector('.column-check').onchange=toggle;
+  el.querySelector('.column-action').onclick=()=>right?removeColumnKeys(new Set([el.dataset.key])):addColumnKeys(new Set([el.dataset.key]));
   if(right){el.querySelectorAll('[data-step]').forEach(button=>button.onclick=()=>reorderSelected(el.dataset.key,+button.dataset.step));el.ondragstart=event=>{dragKey=el.dataset.key;event.dataTransfer.setData('text/plain',dragKey)};el.ondragover=event=>event.preventDefault();el.ondrop=event=>{event.preventDefault();const selected=columns.filter(c=>c.visible),from=selected.findIndex(c=>c.key===dragKey),to=selected.findIndex(c=>c.key===el.dataset.key);if(from<0||to<0)return;const [column]=selected.splice(from,1);selected.splice(to,0,column);columns=[...selected,...columns.filter(c=>!c.visible)];saveColumns();renderColumns()};}
  });
+ $('all-columns').scrollTop=scrolls[0];$('selected-columns').scrollTop=scrolls[1];
  $('columns-add').disabled=!leftMarked.size;$('columns-remove').disabled=!rightMarked.size;
 }
-$('columns-add').onclick=()=>{const selected=columns.filter(c=>c.visible),added=columns.filter(c=>!c.visible&&leftMarked.has(c.key));added.forEach(c=>c.visible=true);columns=[...selected,...added,...columns.filter(c=>!c.visible)];leftMarked.clear();saveColumns();renderColumns()};
-$('columns-remove').onclick=()=>{if(columns.filter(c=>c.visible&&!rightMarked.has(c.key)).length===0){notice('최소 한 개의 컬럼을 표시해야 합니다.',true);return}columns.forEach(c=>{if(rightMarked.has(c.key))c.visible=false});rightMarked.clear();saveColumns();renderColumns()};
+$('columns-add').onclick=()=>addColumnKeys(leftMarked);
+$('columns-remove').onclick=()=>removeColumnKeys(rightMarked);
+$('all-check').onclick=()=>{leftMarked=new Set(matchingColumns().filter(c=>!c.visible).map(c=>c.key));renderColumns()};
+$('all-uncheck').onclick=()=>{leftMarked.clear();renderColumns()};
+$('selected-check').onclick=()=>{rightMarked=new Set(matchingColumns().filter(c=>c.visible).map(c=>c.key));renderColumns()};
+$('selected-uncheck').onclick=()=>{rightMarked.clear();renderColumns()};
 $('column-search').oninput=renderColumns;
 $('columns-open').onclick=()=>{leftMarked.clear();rightMarked.clear();$('column-search').value='';renderColumns();$('columns-dialog').showModal()};$('columns-close').onclick=()=>$('columns-dialog').close();
 $('columns-dialog').addEventListener('click',event=>{const dialog=$('columns-dialog');if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close()}});

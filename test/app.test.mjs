@@ -49,3 +49,17 @@ test('중계 서버는 목록 경로와 날짜 및 nextToken을 쿠팡으로 전
   assert.equal(response.status,200);assert.match(requested.url,/api-gateway.coupang.com\/v2\/providers\/rg_open_api\/apis\/api\/v1\/vendors\/A123\/rg\/orders\?paidDateFrom=20261001&paidDateTo=20261030&nextToken=abc$/);assert.equal(requested.options.headers.Authorization,auth);assert.equal((await response.json()).nextToken,'next');
  }finally{await new Promise(r=>server.close(r))}
 });
+
+test('큰 배송번호와 주문번호를 문자열로 보존하고 일반 숫자와 인용문은 유지한다',async()=>{
+ const {parseApiJson}=await import('../public/core.js');
+ const source='{"shipmentBoxId":6425389700006401429,"orderId":22000009546234,"negative":-9007199254740993,"text":"ID 6425389700006401429 \\"quoted\\"","price":12.5,"exp":1e3,"list":[9007199254740992,12]}';
+ const parsed=parseApiJson(source);assert.equal(parsed.shipmentBoxId,'6425389700006401429');assert.equal(parsed.orderId,22000009546234);assert.equal(parsed.negative,'-9007199254740993');assert.equal(parsed.price,12.5);assert.equal(parsed.exp,1000);assert.equal(parsed.text,'ID 6425389700006401429 "quoted"');assert.deepEqual(parsed.list,['9007199254740992',12]);
+ const orders=parseApiJson('[{"shipmentBoxId":6425389700006401429,"orderId":123,"orderItems":[{"vendorItemId":7,"sequenceNo":"001","shippingCount":1,"salesPrice":{"units":100}}]},{"shipmentBoxId":6425389700006401430,"orderId":123,"orderItems":[{"vendorItemId":7,"sequenceNo":"001","shippingCount":1,"salesPrice":{"units":100}}]}]');
+ const rows=normalize(orders,'마켓플레이스');assert.notEqual(rows[0].id,rows[1].id);assert.equal(new Map(rows.map(r=>[r.id,r])).size,2);
+});
+test('마켓플레이스 일별 범위는 양 끝 날짜를 포함하고 합계는 통화를 분리한다',async()=>{
+ const {marketDateRanges,orderSummary}=await import('../public/core.js');
+ assert.deepEqual(marketDateRanges('2026-10-01','2026-10-03').map(r=>[r.createdAtFrom,r.createdAtTo]),[['2026-10-01+09:00','2026-10-01+09:00'],['2026-10-02+09:00','2026-10-02+09:00'],['2026-10-03+09:00','2026-10-03+09:00']]);
+ const result=orderSummary([{platform:'마켓플레이스',orderId:'1',shipmentBoxId:'11',quantity:2,revenue:1000,currency:'KRW'},{platform:'마켓플레이스',orderId:'1',shipmentBoxId:'12',quantity:1,revenue:100,currency:'TWD'},{platform:'로켓그로스',orderId:'1',shipmentBoxId:'',quantity:3,revenue:3000,currency:'KRW'}]);
+ assert.equal(result.orders,2);assert.equal(result.rows,3);assert.equal(result.shipments,2);assert.deepEqual(result.currencies.get('KRW'),{quantity:5,revenue:4000});assert.equal(result.currencies.get('TWD').revenue,100);
+});

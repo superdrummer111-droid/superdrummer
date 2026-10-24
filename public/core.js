@@ -1,5 +1,17 @@
 export const statuses={ACCEPT:'결제완료',INSTRUCT:'상품준비중',DEPARTURE:'배송지시',DELIVERING:'배송중',FINAL_DELIVERY:'배송완료',NONE_TRACKING:'업체 직접 배송'};
 export const money=value=>typeof value==='object'&&value!==null?Number(value.units??0)+Number(value.nanos??0)/1e9:Number(value??0);
+// Preserve unsafe integer identifiers while leaving quoted text and normal amounts untouched.
+export function parseApiJson(text){
+ let output='',index=0;const number=/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
+ while(index<text.length){
+  if(text[index]==='"'){const start=index++;while(index<text.length){if(text[index]==='\\'){index+=2;continue}if(text[index++]==='"')break;}output+=text.slice(start,index);continue;}
+  if(text[index]==='-'||/\d/.test(text[index])){number.lastIndex=index;const match=number.exec(text);if(match){const token=match[0];output+=/^-?\d+$/.test(token)&&(BigInt(token)>BigInt(Number.MAX_SAFE_INTEGER)||BigInt(token)<BigInt(Number.MIN_SAFE_INTEGER))?JSON.stringify(token):token;index+=token.length;continue;}}
+  output+=text[index++];
+ }
+ return JSON.parse(output);
+}
+export function marketDateRanges(from,to){dateRange(from,to);const dates=[];for(let day=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');day<=end;day+=86400000){const date=new Date(day).toISOString().slice(0,10);dates.push(dateRange(date,date))}return dates;}
+export function orderSummary(rows){const currencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total)}return {rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
 export function rocketListPath(vendorId){if(!/^[A-Za-z0-9_-]+$/.test(vendorId))throw new Error('판매자 ID를 확인하세요.');return `/v2/providers/rg_open_api/apis/api/v1/vendors/${vendorId}/rg/orders`;}
 export function rocketDateRanges(from,to){
  dateRange(from,to);const ranges=[];let cursor=Date.parse(from+'T00:00:00Z'),end=Date.parse(to+'T00:00:00Z');
@@ -26,7 +38,7 @@ export function normalize(orders,platform){return orders.flatMap(order=>(order.o
  const currency=String(rg?(item.currency||'KRW'):(item.salesPrice?.currencyCode||'KRW')).trim().toUpperCase();
  if(!/^[A-Z]{3}$/.test(currency))throw new Error('API 응답의 통화 코드가 올바르지 않습니다.');
  if(!Number.isFinite(quantity)||!Number.isFinite(price)||quantity<0||price<0)throw new Error('수량 또는 가격이 잘못된 주문 데이터입니다.');
- return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo??index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue:quantity*price,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
+ return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue:quantity*price,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
 }))}
 export function mergeRows(oldRows,newRows){const map=new Map(oldRows.map(r=>[r.id,r]));newRows.forEach(r=>map.set(r.id,r));return [...map.values()]}
 export function aggregate(rows){const products=new Map(),platforms=new Map();let quantity=0,revenue=0;for(const row of rows){quantity+=row.quantity;revenue+=row.revenue;platforms.set(row.platform,(platforms.get(row.platform)||0)+row.revenue);const key=JSON.stringify([row.platform,row.vendorItemId,row.currency]);const p=products.get(key)||{platform:row.platform,vendorItemId:row.vendorItemId,productName:row.productName,quantity:0,revenue:0};p.quantity+=row.quantity;p.revenue+=row.revenue;products.set(key,p)}return {quantity,revenue,platforms,products:[...products.values()].sort((a,b)=>b.revenue-a.revenue),orders:new Set(rows.map(r=>r.platform+':'+r.orderId)).size}}
