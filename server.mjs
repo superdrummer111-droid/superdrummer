@@ -2,8 +2,8 @@ import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const publicDir=fileURLToPath(new URL('./public/',import.meta.url));
-const allowed=/^\/v2\/providers\/(?:openapi\/apis\/api\/v5\/vendors\/[A-Za-z0-9_-]+\/ordersheets|rg_open_api\/apis\/api\/v1\/vendors\/[A-Za-z0-9_-]+\/rg\/order\/\d+)$/;
-export function createServer(){return http.createServer(async(req,res)=>{
+const allowed=/^\/v2\/providers\/(?:openapi\/apis\/api\/v5\/vendors\/[A-Za-z0-9_-]+\/ordersheets|rg_open_api\/apis\/api\/v1\/vendors\/[A-Za-z0-9_-]+\/rg\/orders)$/;
+export function createServer({request=fetch}={}){return http.createServer(async(req,res)=>{
  const send=(status,body,type='application/json')=>{res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"});res.end(body)};
  try{
  const url=new URL(req.url,'http://localhost');
@@ -14,7 +14,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
   let input;try{input=JSON.parse(body)}catch{return send(400,JSON.stringify({message:'잘못된 JSON 요청입니다.'}))}
   const {path,query='',authorization}=input;
   if(typeof path!=='string'||!allowed.test(path)||typeof query!=='string'||query.includes('#')||!/^CEA algorithm=HmacSHA256, access-key=[^\r\n,]+, signed-date=\d{6}T\d{6}Z, signature=[a-f0-9]{64}$/.test(authorization??''))return send(400,JSON.stringify({message:'유효하지 않은 API 요청입니다.'}));
-  const upstream=await fetch(`https://api-gateway.coupang.com${path}${query?'?'+query:''}`,{headers:{Authorization:authorization,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),redirect:'error'});
+  const upstream=await request(`https://api-gateway.coupang.com${path}${query?'?'+query:''}`,{headers:{Authorization:authorization,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),redirect:'error'});
   const text=await upstream.text();try{JSON.parse(text)}catch{return send(502,JSON.stringify({message:'쿠팡 API가 JSON이 아닌 응답을 반환했습니다. 네트워크 설정을 확인하세요.'}))}
   return send(upstream.status,text);
  }
