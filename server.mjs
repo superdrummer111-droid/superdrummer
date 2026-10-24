@@ -19,7 +19,7 @@ export function createServer({request=fetch}={}){return http.createServer(async(
   return send(upstream.status,text);
  }
  if(req.method!=='GET')return send(405,'Method not allowed','text/plain');
- const names={'/':'index.html','/app.js':'app.js','/core.js':'core.js','/style.css':'style.css'};
+ const names={'/':'index.html','/app.js':'app.js','/core.js':'core.js','/merchandising.js':'merchandising.js','/range-calendar.js':'range-calendar.js','/style.css':'style.css'};
  const name=names[url.pathname];if(!name)return send(404,'Not found','text/plain');
  send(200,await readFile(publicDir+name),name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8');
  }catch(error){send(502,JSON.stringify({message:error.name==='TimeoutError'?'쿠팡 응답 시간이 초과되었습니다. 조회 범위를 줄여 다시 시도하세요.':'요청 처리에 실패했습니다. 네트워크 연결과 입력값을 확인하세요.'}))}

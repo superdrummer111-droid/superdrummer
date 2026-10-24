@@ -1,3 +1,5 @@
+import {aggregateMerchandise,productProfile,productIdentity,CATEGORIES} from './merchandising.js';
+import {initializeRangeCalendar} from './range-calendar.js';
 import {statuses,normalize,aggregate,authorization,pages,dateRange,rocketListPath,rocketDateRanges,dashboardRows,paymentDate} from './core.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2}).format(n);
@@ -20,13 +22,16 @@ document.querySelectorAll('[data-view]').forEach(el=>el.onclick=()=>view(el.data
 $('credentials').onsubmit=e=>{e.preventDefault();if(store('order-desk-credentials',{vendor:$('vendor').value.trim(),access:$('access').value.trim(),secret:$('secret').value.trim()}))notice('인증 정보를 이 브라우저에 저장했습니다. 주문 조회에서 연결을 확인하세요.')};
 $('forget').onclick=()=>{try{localStorage.removeItem('order-desk-credentials');for(const id of ['vendor','access','secret'])$(id).value='';notice('저장된 인증 정보를 삭제했습니다.')}catch{notice('저장소 접근이 거부되어 삭제하지 못했습니다.',true)}};
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());$('from').value=today.slice(0,8)+'01';$('to').value=today;$('dash-from').value=$('from').value;$('dash-to').value=today;
+function syncRangeLabels(){for(const [id,from,to]of [['dashboard-range','dash-from','dash-to'],['orders-range','from','to']])$(id).textContent=`${$(from).value||'시작일'} → ${$(to).value||'종료일'} ▾`;}
+syncRangeLabels();
+initializeRangeCalendar({dialog:$('calendar-dialog'),triggers:{dashboard:$('dashboard-range'),orders:$('orders-range')},onApply:(target,from,to)=>{const ids=target==='dashboard'?['dash-from','dash-to']:['from','to'];$(ids[0]).value=from;$(ids[1]).value=to;syncRangeLabels();if(target==='dashboard')renderDashboard();}});
 document.querySelectorAll('.source').forEach(el=>el.onclick=()=>{if(busy)return;source=el.dataset.source;document.querySelectorAll('.source').forEach(b=>b.classList.toggle('active',b===el));$('status-field').hidden=source!=='market';$('rg-fields').hidden=source!=='rg'});
 async function api(path,params){const query=new URLSearchParams(params).toString(),auth=await authorization($('access').value.trim(),$('secret').value.trim(),path,query);const response=await fetch('/api/coupang',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path,query,authorization:auth})});let data;try{data=await response.json()}catch{throw new Error('서버 응답을 해석할 수 없습니다.')};if(!response.ok||data.code!==undefined&&!['200','SUCCESS','0'].includes(String(data.code)))throw new Error(`API ${response.status}: ${data.message||'인증과 요청 조건을 확인하세요.'}`);return data}
 function credentialsReady(){
  if(!/^[A-Za-z0-9_-]+$/.test($('vendor').value.trim())||!$('access').value.trim()||!$('secret').value.trim()){notice('API 연결 설정에 판매자 ID와 두 인증키를 입력하세요.',true);view('settings');return false}
  if(!crypto.subtle){notice('브라우저 서명 기능을 사용하려면 HTTPS 또는 localhost로 접속하세요.',true);return false}return true;
 }
-function setBusy(value){busy=value;for(const id of ['fetch-orders','dashboard-refresh'])$(id).disabled=value;$('fetch-orders').textContent=value?'조회 중…':'주문 조회 →';$('dashboard-refresh').textContent=value?'조회 중…':'매출 새로 조회';}
+function setBusy(value){busy=value;for(const id of ['fetch-orders','dashboard-refresh','dashboard-range','orders-range'])$(id).disabled=value;$('fetch-orders').textContent=value?'조회 중…':'주문 조회 →';$('dashboard-refresh').textContent=value?'조회 중…':'매출 조회';}
 async function loadMarket(vendor,from,to,status='ALL'){
  const range=dateRange(from,to),selected=status==='ALL'?Object.keys(statuses):[status],orders=[];
  for(const status of selected)orders.push(...await pages(token=>api(`/v2/providers/openapi/apis/api/v5/vendors/${vendor}/ordersheets`,{...range,status,maxPerPage:'50',...(token?{nextToken:token}:{})}),count=>notice(`${statuses[status]} 조회 중 · ${count}개 발주서 수신`)));
@@ -67,7 +72,7 @@ $('query').onsubmit=async e=>{
   else orders=await loadRocket(vendor,$('from').value,$('to').value);
   const count=commitOrders(vendor,[{platform,orders}]);
   // The dashboard follows the newly queried population instead of retaining stale date filters.
-  $('dash-from').value=$('from').value;$('dash-to').value=$('to').value;
+  $('dash-from').value=$('from').value;$('dash-to').value=$('to').value;syncRangeLabels();
   const currencies=[...new Set(normalize(orders,platform).map(r=>r.currency))];if(currencies.length===1)$('currency').value=currencies[0];renderDashboard();
   notice(`${platform} 조회 완료 · 상품 ${count}행을 대시보드에 반영했습니다. 현재 누적 ${rows.length}행입니다.`);
  }catch(error){notice(error.message+' 이번 조회 결과는 반영하지 않았습니다.',true)}finally{setBusy(false)}
@@ -85,22 +90,59 @@ $('dashboard-refresh').onclick=async()=>{
 };
 function visibleRows(){const q=$('row-search').value.toLowerCase();return rows.filter(r=>(!$('row-platform').value||r.platform===$('row-platform').value)&&(!q||[r.productName,r.orderId,r.vendorItemId].some(v=>v.toLowerCase().includes(q))))}
 function renderOrders(){const data=visibleRows(),selected=columns.filter(c=>c.visible);$('row-count').textContent=data.length;$('order-head').innerHTML='<tr>'+selected.map(c=>`<th>${esc(columnLabel(c.key))}<small class="field-name">${esc(columnEnglish(c.key))}</small></th>`).join('')+'</tr>';$('order-body').innerHTML=data.length?data.map(row=>'<tr>'+selected.map(c=>`<td class="${['quantity','price','revenue'].includes(c.key)?'numeric':''}">${esc(['price','revenue'].includes(c.key)?amount(row[c.key],row.currency):row[c.key])}</td>`).join('')+'</tr>').join(''):`<tr><td colspan="${selected.length}" class="empty">조회된 주문이 없습니다. 인증 정보를 설정하고 주문을 불러오세요.</td></tr>`}
-function renderDashboard(){const cur=$('currency').value,from=$('dash-from').value,to=$('dash-to').value;let scoped;try{scoped=dashboardRows(rows,{currency:cur,from,to})}catch(error){$('dashboard-scope').textContent=error.message;return}const a=aggregate(scoped);
+let productOverrides=readStorage('sb-product-overrides',{});
+if(!productOverrides||typeof productOverrides!=='object'||Array.isArray(productOverrides))productOverrides={};
+function renderPie(entries,total){
+ if(!total)return '<div class="chart-empty">조회된 매출이 없습니다.</div>';
+ const colors=['#6366f1','#10b5a0','#f2ad43','#a0a8b7'];let cursor=0;
+ const segments=entries.map(([name,value],index)=>{const start=cursor;cursor+=value/total*100;return `${colors[index%colors.length]} ${start}% ${cursor}%`});
+ return `<div class="pie-layout"><div class="donut" role="img" aria-label="${esc(entries.map(([name,value])=>name+' '+amount(value)+' '+(value/total*100).toFixed(1)+'%').join(', '))}" style="background:conic-gradient(${segments.join(',')})"><div><small>상품 매출</small><strong class="donut-amount">${esc(amount(total))}</strong></div></div><div class="legend">${entries.map(([name,value],index)=>`<div><span><i style="background:${colors[index%colors.length]}"></i>${esc(name)}</span><strong class="legend-revenue">${esc(amount(value))}</strong><small class="legend-share">${(value/total*100).toFixed(1)}%</small></div>`).join('')}</div></div>`;
+}
+function renderDashboard(){const cur=$('currency').value,from=$('dash-from').value,to=$('dash-to').value;let scoped;try{scoped=dashboardRows(rows,{currency:cur,from,to})}catch(error){$('dashboard-scope').textContent=error.message;return}const brandSelection=$('brand-filter').value,allBrands=[...new Set(scoped.map(row=>productProfile(row,productOverrides[productIdentity(row)]).brand))].sort();
+ $('brand-filter').innerHTML='<option value="">전체 브랜드</option>'+allBrands.map(brand=>`<option value="${esc(brand)}">${esc(brand)}</option>`).join('');$('brand-filter').value=allBrands.includes(brandSelection)?brandSelection:'';
+ scoped=scoped.filter(row=>{const profile=productProfile(row,productOverrides[productIdentity(row)]);return (!$('brand-filter').value||profile.brand===$('brand-filter').value)&&(!$('category-filter').value||profile.category===$('category-filter').value)});
+ const a=aggregate(scoped),merch=aggregateMerchandise(scoped,productOverrides);
  const unknown=rows.filter(r=>!paymentDate(r.paidAt)).length;
- $('dashboard-scope').textContent=`현재 조회 ${rows.length}개 상품 행 중 ${scoped.length}행 집계 · ${cur} · ${from||'시작 제한 없음'} ~ ${to||'종료 제한 없음'} (한국 시간)${unknown?' · 결제일 미확인 '+unknown+'행은 날짜 필터 적용 시 제외':''} · 새로고침하면 데이터가 초기화됩니다.`;$('total-revenue').textContent=amount(a.revenue);$('total-quantity').innerHTML=fmt(a.quantity)+'<em>개</em>';$('total-orders').innerHTML=fmt(a.orders)+'<em>건</em>';
+ $('dashboard-scope').textContent=`현재 조회 ${rows.length}개 상품 행 중 ${scoped.length}행 집계 · ${cur} · ${from||'시작 제한 없음'} ~ ${to||'종료 제한 없음'} (한국 시간)${unknown?' · 결제일 미확인 '+unknown+'행은 날짜 필터 적용 시 제외':''} · 새로고침하면 데이터가 초기화됩니다.`;$('total-revenue').textContent=amount(a.revenue);$('total-quantity').innerHTML=fmt(merch.quantity)+'<em>개</em>';$('total-orders').innerHTML=fmt(a.orders)+'<em>건</em>';
  const channels=['마켓플레이스','로켓그로스'],values=channels.map(c=>a.platforms.get(c)||0),max=Math.max(...values,1),colors=['#6366f1','#10b5a0'];
  $('bar-chart').innerHTML=a.orders?`<div class="bars">${channels.map((name,i)=>`<div class="bar-row"><div class="bar-meta"><span><i style="background:${colors[i]}"></i>${name}</span><strong>${esc(amount(values[i]))}</strong></div><div class="track"><div style="width:${values[i]/max*100}%;background:${colors[i]}"></div></div></div>`).join('')}<div class="scale"><span>0</span><span>${esc(amount(max/2))}</span><span>${esc(amount(max))}</span></div></div>`:'<div class="chart-empty">주문을 불러오면 채널별 매출이 표시됩니다.</div>';
- const percent=a.revenue?values[0]/a.revenue*100:0;
- $('pie-chart').innerHTML=a.revenue?`<div class="pie-layout"><div class="donut" role="img" aria-label="마켓플레이스 ${percent.toFixed(1)}%, 로켓그로스 ${(100-percent).toFixed(1)}%" style="background:conic-gradient(${colors[0]} 0% ${percent}%,${colors[1]} ${percent}% 100%)"><div><small>전체 매출</small><strong>100<span>%</span></strong></div></div><div class="legend">${channels.map((name,i)=>`<div><span><i style="background:${colors[i]}"></i>${name}</span><strong>${(values[i]/a.revenue*100).toFixed(1)}%<small>${esc(amount(values[i]))}</small></strong></div>`).join('')}</div></div>`:'<div class="chart-empty">매출이 있는 주문을 조회하면 점유율이 표시됩니다.</div>';
- const q=$('product-search').value.toLowerCase(),products=a.products.filter(p=>[p.productName,p.vendorItemId].some(v=>v.toLowerCase().includes(q)));$('product-count').textContent=products.length;$('products').innerHTML=products.length?products.map(p=>`<tr><td><strong>${esc(p.productName)}</strong><small>${esc(p.vendorItemId)}</small></td><td><span class="channel ${p.platform==='로켓그로스'?'rg':''}">${esc(p.platform)}</span></td><td class="numeric">${fmt(p.quantity)}</td><td class="numeric"><strong>${esc(amount(p.revenue))}</strong></td></tr>`).join(''):'<tr><td colspan="4" class="empty">표시할 판매 실적이 없습니다.</td></tr>'}
+ $('pie-chart').innerHTML=renderPie(channels.map((name,i)=>[name,values[i]]),a.revenue);
+ $('category-chart').innerHTML=renderPie([...merch.categories],a.revenue);
+ const brandEntries=[...merch.brands].sort((a,b)=>b[1]-a[1]),brandMax=Math.max(...brandEntries.map(([,value])=>value),1);
+ $('brand-chart').innerHTML=a.revenue?`<div class="bars brand-bars">${brandEntries.map(([brand,value])=>`<div class="bar-row"><div class="bar-meta"><span>${esc(brand)}</span><strong>${esc(amount(value))}</strong></div><div class="track"><div style="width:${value/brandMax*100}%;background:#6366f1"></div></div></div>`).join('')}</div>`:'<div class="chart-empty">조회된 브랜드 매출이 없습니다.</div>';
+ const q=$('product-search').value.toLowerCase(),products=merch.products.filter(p=>[p.productName,p.brand,...[...p.variants.values()].flatMap(v=>[v.productName,v.vendorItemId])].some(v=>String(v).toLowerCase().includes(q)));
+ $('product-count').textContent=products.length;
+ $('products').innerHTML=products.length?products.map(p=>`<tr><td><strong>${esc(p.productName)}</strong><small>${esc(p.brand)} · ${esc(p.category)}</small><details class="product-details"><summary>원본·분류 확인 (${p.variants.size}개 옵션)</summary><div class="variant-details">${[...p.variants.values()].map(v=>`<div class="variant-row"><div><strong>${esc(v.productName)}</strong><small>${esc(v.platform)} · ${esc(v.vendorItemId)} · 주문 ${fmt(v.quantity)} × 묶음 ${v.packSize} = 출고 ${fmt(v.units)}</small></div><label>브랜드<input data-override="brand" data-product="${esc(v.key)}" value="${esc(p.brand==='기타 / 미분류'?'':p.brand)}" placeholder="미분류"></label><label>세분류<select data-override="category" data-product="${esc(v.key)}">${CATEGORIES.map(c=>`<option ${c===p.category?'selected':''}>${c}</option>`).join('')}</select></label><label>묶음 수량<input type="number" min="1" max="999" step="1" data-override="packSize" data-product="${esc(v.key)}" value="${v.packSize}"></label></div>`).join('')}</div></details></td><td>${[...p.platforms].map(platform=>`<span class="channel ${platform==='로켓그로스'?'rg':''}">${esc(platform)}</span>`).join(' ')}</td><td class="numeric"><strong>${fmt(p.quantity)}</strong><small>주문 ${fmt(p.orderedQuantity)}</small></td><td class="numeric"><strong>${esc(amount(p.revenue))}</strong></td></tr>`).join(''):'<tr><td colspan="4" class="empty">표시할 판매 실적이 없습니다.</td></tr>';
+ $('products').querySelectorAll('[data-override]').forEach(input=>input.onchange=()=>{
+  const key=input.dataset.product,field=input.dataset.override;let value=input.value.trim();
+  if(field==='packSize'){value=Number(value);if(!Number.isInteger(value)||value<1||value>999){notice('묶음 수량은 1~999 사이 정수로 입력하세요.',true);renderDashboard();return}}
+  const next={...productOverrides,[key]:{...productOverrides[key],[field]:value}};if(store('sb-product-overrides',next)){productOverrides=next;renderDashboard()}
+ });
+}
+
 function render(){const current=$('currency').value,currencies=[...new Set(['KRW',...rows.map(r=>r.currency)])];$('currency').innerHTML=currencies.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');$('currency').value=currencies.includes(current)?current:'KRW';renderOrders();renderDashboard()}
-for(const id of ['dash-from','dash-to','currency','product-search'])$(id).addEventListener('input',renderDashboard);for(const id of ['row-platform','row-search'])$(id).addEventListener('input',renderOrders);
+for(const id of ['dash-from','dash-to','currency','product-search','brand-filter','category-filter'])$(id).addEventListener('input',renderDashboard);for(const id of ['row-platform','row-search'])$(id).addEventListener('input',renderOrders);
 $('clear-data').onclick=()=>{if(busy){notice('조회가 끝난 뒤 데이터를 비울 수 있습니다.',true);return}rows=[];render();notice('현재 탭의 조회 데이터를 비웠습니다.')};
 function saveColumns(){store('order-desk-columns',columns);renderOrders()}
-function moveColumn(from,to){if(from===to||from<0||to<0||from>=columns.length||to>=columns.length)return;const [column]=columns.splice(from,1);columns.splice(to,0,column);saveColumns();renderColumns()}
-let dragIndex=-1;
-function renderColumns(){const sample=visibleRows()[0]||rows[0];$('column-list').innerHTML=columns.map((column,index)=>`<div class="column-option" draggable="true" data-index="${index}"><span class="grip">⠿</span><input type="checkbox" aria-label="${esc(columnLabel(column.key))} 표시" data-check="${index}" ${column.visible?'checked':''}><div><strong>${esc(columnLabel(column.key))}</strong><small class="field-name">${esc(columnEnglish(column.key))}</small><small>${esc(sample?sample[column.key]??'값 없음':'조회 후 첫 번째 데이터가 표시됩니다.')}</small></div><button data-up="${index}" aria-label="위로 이동" ${index===0?'disabled':''}>↑</button><button data-down="${index}" aria-label="아래로 이동" ${index===columns.length-1?'disabled':''}>↓</button></div>`).join('');
- $('column-list').querySelectorAll('[data-check]').forEach(el=>el.onchange=()=>{if(!el.checked&&columns.filter(c=>c.visible).length===1){el.checked=true;notice('최소 한 개의 컬럼을 표시해야 합니다.',true);return}columns[+el.dataset.check].visible=el.checked;saveColumns()});
- $('column-list').querySelectorAll('[data-up]').forEach(el=>el.onclick=()=>moveColumn(+el.dataset.up,+el.dataset.up-1));$('column-list').querySelectorAll('[data-down]').forEach(el=>el.onclick=()=>moveColumn(+el.dataset.down,+el.dataset.down+1));
- $('column-list').querySelectorAll('.column-option').forEach(el=>{el.ondragstart=e=>{dragIndex=+el.dataset.index;e.dataTransfer.setData('text/plain',String(dragIndex));el.classList.add('dragging')};el.ondragend=()=>el.classList.remove('dragging');el.ondragover=e=>e.preventDefault();el.ondrop=e=>{e.preventDefault();moveColumn(dragIndex,+el.dataset.index)}})}
-$('columns-open').onclick=()=>{renderColumns();$('columns-dialog').showModal()};$('columns-close').onclick=()=>$('columns-dialog').close();render();
+let leftMarked=new Set(),rightMarked=new Set(),dragKey='';
+function reorderSelected(key,delta){const selected=columns.filter(c=>c.visible),index=selected.findIndex(c=>c.key===key),next=index+delta;if(index<0||next<0||next>=selected.length)return;const [column]=selected.splice(index,1);selected.splice(next,0,column);columns=[...selected,...columns.filter(c=>!c.visible)];saveColumns();renderColumns()}
+function renderColumns(){
+ const sample=visibleRows()[0]||rows[0],q=$('column-search').value.toLowerCase(),matches=c=>[columnLabel(c.key),columnEnglish(c.key)].some(value=>value.toLowerCase().includes(q));
+ function option(column,right){const marked=(right?rightMarked:leftMarked).has(column.key),selected=columns.filter(c=>c.visible),index=selected.findIndex(c=>c.key===column.key),example=sample?sample[column.key]??'값 없음':'조회 후 예시 표시';
+ return `<div class="transfer-option ${marked?'marked':''} ${!right&&column.visible?'included':''}" role="option" aria-selected="${marked}" tabindex="0" data-key="${esc(column.key)}" ${right?'draggable="true"':''}><span class="column-identity"><strong>${right?'⠿ ':''}${esc(columnLabel(column.key))}</strong><small>${esc(columnEnglish(column.key))}</small></span><span class="column-example" title="${esc(example)}">${esc(example)}</span>${right?`<span class="column-order"><button type="button" data-step="-1" aria-label="위로 이동" ${index===0?'disabled':''}>↑</button><button type="button" data-step="1" aria-label="아래로 이동" ${index===selected.length-1?'disabled':''}>↓</button></span>`:column.visible?'<span class="included-badge">선택됨</span>':''}</div>`;
+ }
+ $('all-column-count').textContent=columns.length;$('selected-column-count').textContent=columns.filter(c=>c.visible).length;
+ $('all-columns').innerHTML=columns.filter(matches).map(c=>option(c,false)).join('');$('selected-columns').innerHTML=columns.filter(c=>c.visible&&matches(c)).map(c=>option(c,true)).join('');
+ for(const [id,right]of [['all-columns',false],['selected-columns',true]])$(id).querySelectorAll('.transfer-option').forEach(el=>{
+  const toggle=()=>{const key=el.dataset.key;if(!right&&columns.find(c=>c.key===key).visible)return;const marked=right?rightMarked:leftMarked;marked.has(key)?marked.delete(key):marked.add(key);renderColumns()};
+  el.onclick=event=>{if(!event.target.closest('button'))toggle()};el.onkeydown=event=>{if(event.target===el&&(event.key===' '||event.key==='Enter')){event.preventDefault();toggle()}};
+  if(right){el.querySelectorAll('[data-step]').forEach(button=>button.onclick=()=>reorderSelected(el.dataset.key,+button.dataset.step));el.ondragstart=event=>{dragKey=el.dataset.key;event.dataTransfer.setData('text/plain',dragKey)};el.ondragover=event=>event.preventDefault();el.ondrop=event=>{event.preventDefault();const selected=columns.filter(c=>c.visible),from=selected.findIndex(c=>c.key===dragKey),to=selected.findIndex(c=>c.key===el.dataset.key);if(from<0||to<0)return;const [column]=selected.splice(from,1);selected.splice(to,0,column);columns=[...selected,...columns.filter(c=>!c.visible)];saveColumns();renderColumns()};}
+ });
+ $('columns-add').disabled=!leftMarked.size;$('columns-remove').disabled=!rightMarked.size;
+}
+$('columns-add').onclick=()=>{const selected=columns.filter(c=>c.visible),added=columns.filter(c=>!c.visible&&leftMarked.has(c.key));added.forEach(c=>c.visible=true);columns=[...selected,...added,...columns.filter(c=>!c.visible)];leftMarked.clear();saveColumns();renderColumns()};
+$('columns-remove').onclick=()=>{if(columns.filter(c=>c.visible&&!rightMarked.has(c.key)).length===0){notice('최소 한 개의 컬럼을 표시해야 합니다.',true);return}columns.forEach(c=>{if(rightMarked.has(c.key))c.visible=false});rightMarked.clear();saveColumns();renderColumns()};
+$('column-search').oninput=renderColumns;
+$('columns-open').onclick=()=>{leftMarked.clear();rightMarked.clear();$('column-search').value='';renderColumns();$('columns-dialog').showModal()};$('columns-close').onclick=()=>$('columns-dialog').close();
+$('columns-dialog').addEventListener('click',event=>{const dialog=$('columns-dialog');if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close()}});
+render();
