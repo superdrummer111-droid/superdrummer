@@ -12,3 +12,6 @@ export function createMemoryCache({ttl=300000,now=()=>Date.now()}={}){
   try{const value=await promise;values.set(key,{value,at:now()});return {value,hit:false}}finally{pending.delete(key)}
  }};
 }
+export async function withRetry(task,{attempts=3,sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms)),onRetry=()=>{}}={}){
+ for(let attempt=0;attempt<attempts;attempt++){try{return await task(attempt)}catch(error){if(!error.retryable||attempt===attempts-1)throw error;const delay=Math.min(10000,Math.max(Number(error.retryAfter)||0,600*2**attempt));onRetry(error,attempt+1,delay);await sleep(delay);}}
+}

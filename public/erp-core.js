@@ -87,6 +87,6 @@ export function parseInitialData(input){
  if(input?.version!==1||!Array.isArray(input.catalog)||!Array.isArray(input.inventory?.rows))throw Error('초기 가져오기 파일 형식(version 1)을 확인하세요.');
  const catalog=parseCatalog([['옵션ID','품번','품명','브랜드','프로젝트코드','프로젝트','본품여부','가중치','상품ID'],...input.catalog.map(r=>[r.optionId,r.itemCode,r.itemName,r.brand,r.projectCode,r.project,r.mainProduct,r.weight,r.productId])]);
  const inventory=parseInventory([['창고코드','창고','장소코드','장소','품번','품명','LOT No','기말재고'],...input.inventory.rows.map(r=>[r.warehouse,r.warehouseName,r.location,r.locationName,r.itemCode,r.itemName,r.lot,r.closing])]);
- const errors=[...catalog.errors,...inventory.errors];if(errors.length)throw Error(errors.join(' / '));if(!catalog.rows.length||!inventory.rows.length)throw Error('초기 파일에 코드표와 재고가 모두 있어야 합니다.');if(input.inventory.asOf)validateRange(input.inventory.asOf,input.inventory.asOf);
- return {catalog:catalog.rows,inventory:{rows:inventory.rows,asOf:input.inventory.asOf||'',source:'초기 파일 가져오기',updatedAt:new Date().toISOString()}};
+ const errors=[...catalog.errors,...inventory.errors];if(errors.length)throw Error(errors.join(' / '));if(!catalog.rows.length||!inventory.rows.length)throw Error('초기 파일에 코드표와 재고가 모두 있어야 합니다.');
+ return {catalog:catalog.rows,inventory:{rows:inventory.rows,source:'초기 파일 가져오기',updatedAt:new Date().toISOString()}};
 }

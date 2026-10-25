@@ -16,10 +16,11 @@ export function createServer({request=fetch}={}){return http.createServer(async(
   if(typeof path!=='string'||!allowed.test(path)||typeof query!=='string'||query.includes('#')||!/^CEA algorithm=HmacSHA256, access-key=[^\r\n,]+, signed-date=\d{6}T\d{6}Z, signature=[a-f0-9]{64}$/.test(authorization??''))return send(400,JSON.stringify({message:'유효하지 않은 API 요청입니다.'}));
   const upstream=await request(`https://api-gateway.coupang.com${path}${query?'?'+query:''}`,{headers:{Authorization:authorization,'Content-Type':'application/json'},signal:AbortSignal.timeout(90000),redirect:'error'});
   const text=await upstream.text();try{JSON.parse(text)}catch{return send(502,JSON.stringify({message:'쿠팡 API가 JSON이 아닌 응답을 반환했습니다. 네트워크 설정을 확인하세요.'}))}
+  if(upstream.headers?.get('retry-after'))res.setHeader('Retry-After',upstream.headers.get('retry-after'));
   return send(upstream.status,text);
  }
  if(req.method!=='GET')return send(405,'Method not allowed','text/plain');
- const names={'/':'index.html','/app.js':'app.js','/core.js':'core.js','/erp-core.js':'erp-core.js','/erp-ui.js':'erp-ui.js','/erp-seed.js':'erp-seed.js','/erp-schema.js':'erp-schema.js','/erp-workbook.js':'erp-workbook.js','/erp-clipboard.js':'erp-clipboard.js','/fetching.js':'fetching.js','/reporting.js':'reporting.js','/line-chart.js':'line-chart.js','/merchandising.js':'merchandising.js','/range-calendar.js':'range-calendar.js','/style.css':'style.css'};
+ const names={'/':'index.html','/app.js':'app.js','/core.js':'core.js','/item-master.js':'item-master.js','/item-master-ui.js':'item-master-ui.js','/erp-core.js':'erp-core.js','/erp-ui.js':'erp-ui.js','/erp-seed.js':'erp-seed.js','/erp-schema.js':'erp-schema.js','/erp-workbook.js':'erp-workbook.js','/erp-clipboard.js':'erp-clipboard.js','/fetching.js':'fetching.js','/reporting.js':'reporting.js','/line-chart.js':'line-chart.js','/merchandising.js':'merchandising.js','/range-calendar.js':'range-calendar.js','/style.css':'style.css'};
  if(url.pathname==='/vendor/exceljs.min.js')return send(200,await readFile(fileURLToPath(new URL('./node_modules/exceljs/dist/exceljs.min.js',import.meta.url))),'text/javascript; charset=utf-8');
  const name=names[url.pathname];if(!name)return send(404,'Not found','text/plain');
  send(200,await readFile(publicDir+name),name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8');

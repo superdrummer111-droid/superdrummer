@@ -9,10 +9,10 @@ test('긴 조회는 월 경계로 나누고 로켓그로스는 30일 제한을 �
  const ranges=rocketDateRanges('2024-02-28','2024-04-01');assert.deepEqual(ranges,[{paidDateFrom:'20240228',paidDateTo:'20240229'},{paidDateFrom:'20240301',paidDateTo:'20240330'},{paidDateFrom:'20240331',paidDateTo:'20240331'},{paidDateFrom:'20240401',paidDateTo:'20240401'}]);
  assert.throws(()=>validateRange('2026-02-30','2026-03-01'));assert.throws(()=>validateRange('2026-04-01','2026-03-01'));
 });
-test('주간은 월요일 기준이며 현재 월·주는 경과 일수를 맞춘다',()=>{
+test('주간은 월요일·경과 일수 기준이고 월간은 지난달 전체와 비교한다',()=>{
  assert.deepEqual(periodBounds('2026-10-25','week'),{from:'2026-10-19',to:'2026-10-25'});
  const week=comparisonPeriods('week','2026-10-21','2026-10-21');assert.deepEqual(week.current,{from:'2026-10-19',to:'2026-10-21'});assert.deepEqual(week.previous,{from:'2026-10-12',to:'2026-10-14'});
- const month=comparisonPeriods('month','2026-10','2026-10-25');assert.deepEqual(month.current,{from:'2026-10-01',to:'2026-10-25'});assert.deepEqual(month.previous,{from:'2026-09-01',to:'2026-09-25'});
+ const month=comparisonPeriods('month','2026-10','2026-10-25');assert.deepEqual(month.current,{from:'2026-10-01',to:'2026-10-25'});assert.deepEqual(month.previous,{from:'2026-09-01',to:'2026-09-30'});
  const closed=comparisonPeriods('month','2026-09','2026-10-25');assert.equal(closed.current.to,'2026-09-30');assert.equal(closed.previous.to,'2026-08-31');
  const short=comparisonPeriods('month','2026-03','2026-03-30');assert.equal(short.previous.to,'2026-02-28');assert.throws(()=>comparisonPeriods('month','2026-11','2026-10-25'));
 });

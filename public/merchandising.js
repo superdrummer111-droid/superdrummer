@@ -1,11 +1,13 @@
+import {masterFor} from './item-master.js';
 const BRAND_RULES=[['뉴앤힐',/뉴\s*(?:앤|&|엔)\s*힐|new\s*(?:&|and|n)\s*heal/iu],['뉴트리탑',/뉴\s*트리\s*탑|nutri\s*top/iu]];
 const CATEGORIES=['사료','영양제','세정제','미분류'];
 export {CATEGORIES};
 export const productIdentity=row=>JSON.stringify([row.platform,row.vendorItemId]);
 export function productProfile(row,override={}){
  const original=String(row.productName||'이름 없음').normalize('NFKC');
- const brand=override.brand||BRAND_RULES.find(([,pattern])=>pattern.test(original))?.[0]||'기타 / 미분류';
- let category=CATEGORIES.includes(override.category)?override.category:undefined;
+ const master=masterFor(row.vendorItemId);
+ const brand=master.brand||override.brand||BRAND_RULES.find(([,pattern])=>pattern.test(original))?.[0]||'기타 / 미분류';
+ let category=CATEGORIES.includes(master.category)?master.category:CATEGORIES.includes(override.category)?override.category:undefined;
  if(!category){
   const text=original+' '+(row['item.productCategoryLevel1']||'')+' '+(row['item.productCategoryLevel2']||'');
   category=/세정|세척|클리너|샴푸|치약|소독|탈취|워시|cleanser|shampoo/iu.test(text)?'세정제':/영양제|보조제|유산균|오메가|비타민|영양보충|supplement|probiotic/iu.test(text)?'영양제':/사료|건식|습식|주식캔|키블|dog\s*food|cat\s*food/iu.test(text)?'사료':'미분류';
@@ -21,6 +23,7 @@ export function productProfile(row,override={}){
  if(override.packSize!=null&&Number.isInteger(Number(override.packSize))&&Number(override.packSize)>=1&&Number(override.packSize)<=999)packSize=Number(override.packSize);
  for(const [canonical,pattern]of BRAND_RULES)name=name.replace(new RegExp(pattern.source,'giu'),canonical);
  name=name.replace(/반려견/gu,'강아지').replace(/반려묘/gu,'고양이').replace(/[\[\](),;_\-]+/gu,' ').replace(/\s+/gu,' ').trim();
+ if(master.name)name=master.name;
  const compact=name.toLowerCase().split(/\s+/u).sort().join('').replace(/[^\p{L}\p{N}.]/gu,'');
  const capacities=[...name.toLowerCase().matchAll(/\d+(?:\.\d+)?\s*(?:kg|mg|g|ml|l|정|캡슐|포|개입)/gu)].map(m=>m[0].replace(/\s/g,'')).sort().join('|');
  const variants=[...name.toLowerCase().matchAll(/어덜트|adult|퍼피|puppy|시니어|senior|키튼|kitten|고양이|강아지|연어|치킨|닭|소고기|양고기|오리|대형견|소형견/gu)].map(m=>m[0]).sort().join('|');

@@ -11,7 +11,7 @@ export function comparisonPeriods(mode,anchor,today){
  if(full.from>today)throw new Error('미래의 기간은 비교할 수 없습니다.');
  const current={from:full.from,to:full.to>today?today:full.to};
  const previousFull=periodBounds(iso(stamp(full.from)-DAY),mode),partial=current.to<full.to;
- const previous={from:previousFull.from,to:partial?iso(Math.min(stamp(previousFull.to),stamp(previousFull.from)+(stamp(current.to)-stamp(current.from)))):previousFull.to};
+ const previous={from:previousFull.from,to:partial&&mode!=='month'?iso(Math.min(stamp(previousFull.to),stamp(previousFull.from)+(stamp(current.to)-stamp(current.from)))):previousFull.to};
  return {current,previous,partial,from:previous.from,to:current.to};
 }
 export function growth(current,previous){return {delta:current-previous,rate:previous===0?(current===0?0:null):(current-previous)/previous*100,label:previous===0&&current>0?'신규':null};}
