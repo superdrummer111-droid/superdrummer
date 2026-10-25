@@ -4,7 +4,7 @@ export async function createErpWorkbook(ExcelJS,rows){
  ERP_HEADER_ROWS.forEach(values=>sheet.addRow([...values]));
  for(const [index,row]of rows.entries()){const errors=validateErpRow(row);if(errors.length)throw Error(`${index+4}행: ${errors.join(', ')}`);sheet.addRow(ERP_SCHEMA.map(column=>row[column.key]??''));}
  sheet.views=[{state:'frozen',ySplit:3}];
- ERP_SCHEMA.forEach((column,index)=>{const col=sheet.getColumn(index+1);col.width=['REMARK_DC','REMARK_DC_D'].includes(column.key)?32:column.key==='LOT_NB'?35:18;for(let r=4;r<=sheet.rowCount;r++){const cell=sheet.getCell(r,index+1);cell.numFmt=column.type==='숫자'?(column.key==='VAT_UM'?'0.00':column.length.endsWith(',6')?'0.######':'0.####'):'@';}});
+ ERP_SCHEMA.forEach((column,index)=>{const col=sheet.getColumn(index+1);col.width=['REMARK_DC','REMARK_DC_D'].includes(column.key)?32:column.key==='LOT_NB'?35:18;for(let r=4;r<=sheet.rowCount;r++){const cell=sheet.getCell(r,index+1);if(column.type==='숫자'){const places=Number(column.length.split(',')[1]||0),fraction=typeof cell.value==='number'?cell.value.toFixed(places).split('.')[1]?.replace(/0+$/,'')||'':'';cell.numFmt=fraction?'0.'+'0'.repeat(fraction.length):'0';}else cell.numFmt='@';}});
  for(let r=1;r<=3;r++)sheet.getRow(r).eachCell(cell=>{cell.font={name:'맑은 고딕',size:r===3?9:10,bold:r!==3};cell.alignment={vertical:'top',wrapText:true};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:r===3?'FFF4F6FC':'FFE8ECF8'}}});sheet.getRow(3).height=124;
  return workbook;
 }
