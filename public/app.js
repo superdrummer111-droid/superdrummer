@@ -219,7 +219,7 @@ const erpApp=initializeErp({getRows:()=>rows,getVendor:()=>loadedVendor||$('vend
  if(busy)throw Error('다른 조회가 진행 중입니다.');if(!credentialsReady())throw Error('API 인증 정보를 먼저 입력하세요.');setBusy(true);try{return await ensureShared($('vendor').value.trim(),options.from,options.to,{market:options.market,rocket:options.rocket&&options.mode==='api'})}finally{setBusy(false)}
 }});
 const masterApp=initializeItemMaster({getRows:()=>rows,notice,onChange:()=>{renderDashboard();renderComparison('weekly');renderComparison('monthly')}});
-const mappingApp=initializeMapping({getRows:()=>rows,getCatalog:erpApp.getCatalog,getSettings:erpApp.getSettings,notice,onChange:()=>erpApp.dataChanged()});
+const mappingApp=initializeMapping({getRows:()=>rows,getCatalog:erpApp.getCatalog,getExcelRows:erpApp.getRocketRows,getSettings:erpApp.getSettings,getFieldLabel:columnLabel,notice,onChange:()=>erpApp.dataChanged()});
 const revenueApp=initializeRevenueCheck({today,getVendor:()=>$('vendor').value.trim(),notice,fetchData:async({from,to,ordersFrom,onProgress})=>{
  if(busy)throw Error('다른 조회가 진행 중입니다.');if(!credentialsReady())throw Error('API 인증 정보를 먼저 입력하세요.');setBusy(true);try{const vendor=requestContext.vendor,data=await fetchRevenue(api,{vendor,from,to,onProgress});let actualFrom=ordersFrom;for(const record of data.records){const date=paymentDate(record.saleDate);if(date&&date<actualFrom)actualFrom=date;}onProgress('구매확정 주문 대사 · 주문 검색 '+actualFrom+' ~ '+to);await ensureShared(vendor,actualFrom,to,{market:true,rocket:false});return {...data,orders:rows,vendor,ordersFrom:actualFrom};}finally{setBusy(false)}
 }});
