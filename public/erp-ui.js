@@ -1,6 +1,6 @@
 import {SEED_CATALOG,SEED_INVENTORY} from './erp-seed.js';
 import {parseCatalog,parseInventory,parseRocketSales,parseDelimited,erpSources,buildErp,ERP_SCHEMA,identifier,reconcileErp,parseInitialData} from './erp-core.js';
-import {clipboardEventData,readBrowserClipboard} from './erp-clipboard.js';
+import {clipboardEventData,readBrowserClipboard,matrixFromClipboard} from './erp-clipboard.js';
 import {createErpWorkbook,worksheetMatrix} from './erp-workbook.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id),fmt=n=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:4}).format(n);
@@ -20,9 +20,9 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi}
  function renderInventory(){const rows=inventory.rows.filter(r=>r.closing>0),q=$('inventory-search').value.toLowerCase();$('inventory-count').textContent=`${rows.length}개 유효 LOT · 기말재고 ${fmt(rows.reduce((sum,r)=>sum+r.closing,0))}${inventory.updatedAt?' · 최근 저장 '+new Date(inventory.updatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):''}`;$('inventory-table').innerHTML=table(['창고코드','장소코드','장소','품번','품명','LOT No','기말재고'],rows.filter(r=>[r.itemCode,r.itemName,r.lot,r.location].some(v=>String(v).toLowerCase().includes(q))).map(r=>[r.warehouse,r.location,r.locationName,r.itemCode,r.itemName,r.lot,r.closing]));}
  function persistInventory(rows,source){const positive=rows.filter(r=>r.closing>0),next={rows:positive,source,updatedAt:new Date().toISOString()};save('sb-erp-inventory-v1',next);inventory=next;stagedInventory=null;inventoryRevision++;invalidate();renderInventory();return rows.length-positive.length;}
  function inventoryInput(data){const parsed=parseInventory(data.matrix);report('inventory-errors',parsed);if(!parsed.rows.length&&!parsed.errors.length)parsed.errors.push('기말재고 데이터 행이 없습니다. 기존 재고를 유지합니다.');report('inventory-errors',parsed);if(parsed.errors.length){notice('재고 입력 오류로 기존 재고를 유지했습니다.',true);return}const excluded=persistInventory(parsed.rows,'클립보드 자동저장');lastInventory=null;$('inventory-undo').hidden=true;$('inventory-paste').value=data.matrix.map(row=>row.join('\t')).join('\n');$('inventory-format').textContent=`${data.format} · ${inventory.rows.length}개 LOT 자동 저장 · 0 이하 ${excluded}행 제외 · 클립보드 형식 ${(data.types||[]).join(', ')||'직접 입력'}`;notice('기말재고를 이 브라우저에 자동 저장했습니다.');}
- $('inventory-paste').addEventListener('paste',event=>{event.preventDefault();try{inventoryInput(clipboardEventData(event))}catch(error){report('inventory-errors',{errors:[error.message]});notice('입력을 인식하지 못해 기존 재고를 유지했습니다.',true)}});
+ $('inventory-paste').addEventListener('paste',event=>{try{const data=clipboardEventData(event);event.preventDefault();inventoryInput(data)}catch(error){report('inventory-errors',{errors:[error.message]});notice(error.message,true)}});
  $('inventory-read').onclick=async()=>{try{inventoryInput(await readBrowserClipboard())}catch(error){$('inventory-paste').focus();report('inventory-errors',{errors:[error.message]});notice(error.message,true)}};
- $('inventory-parse').onclick=()=>{try{inventoryInput({matrix:parseDelimited($('inventory-paste').value),format:'입력 텍스트'})}catch(error){notice(error.message,true)}};
+ $('inventory-parse').onclick=()=>{try{inventoryInput({...matrixFromClipboard({text:$('inventory-paste').value})})}catch(error){notice(error.message,true)}};
  $('inventory-delete').onclick=()=>{lastInventory=structuredClone(inventory);persistInventory([],'사용자 삭제');$('inventory-paste').value='';$('inventory-format').textContent='저장 재고를 삭제했습니다.';$('inventory-undo').hidden=false;};
  $('inventory-undo').onclick=()=>{if(lastInventory){persistInventory(lastInventory.rows,'삭제 되돌리기');$('inventory-format').textContent='삭제 이전 재고를 복원하고 자동 저장했습니다.';lastInventory=null;$('inventory-undo').hidden=true;}};
  $('inventory-search').oninput=renderInventory;
