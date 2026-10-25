@@ -29,6 +29,7 @@ export function paymentDate(value){
  if(!value)return '';
  // Rocket Growth timestamps have no offset and are Korean local time.
  const text=paymentTime(value).trim().replace(' ','T');
+ if(/^\d{4}-\d{2}-\d{2}$/.test(text)){try{validateRange(text,text);return text}catch{return ''}}
  const date=new Date(/(?:Z|[+-]\d{2}:?\d{2})$/i.test(text)?text:text+'+09:00');
  if(Number.isNaN(date.getTime()))return '';
  return koreaDateFormatter.format(date);
