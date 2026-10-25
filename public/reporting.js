@@ -26,13 +26,19 @@ const inRange=(row,range)=>{const day=paymentDate(row.paidAt);return !!day&&day>
 export function comparisonData(rows,{current,previous,currency,overrides={}}){
  const base=rows.filter(row=>row.currency===currency&&(inRange(row,current)||inRange(row,previous))),groups=aggregateMerchandise(base,overrides).products,productKeys=new Map();
  groups.forEach((group,index)=>group.variants.forEach((_,key)=>productKeys.set(key,{key:String(index),name:group.productName,brand:group.brand,category:group.category})));
- const maps={channel:new Map(['마켓플레이스','로켓그로스'].map(name=>[name,{name,current:0,previous:0}])),category:new Map(['사료','영양제','세정제','미분류'].map(name=>[name,{name,current:0,previous:0}])),brand:new Map(),product:new Map()};let currentTotal=0,previousTotal=0;
- for(const row of base){const side=inRange(row,current)?'current':'previous',profile=productProfile(row,overrides[productIdentity(row)]),product=productKeys.get(productIdentity(row));if(side==='current')currentTotal+=row.revenue;else previousTotal+=row.revenue;
-  for(const [dimension,key,name,extra]of [['channel',row.platform,row.platform,{}],['category',profile.category,profile.category,{}],['brand',profile.brand,profile.brand,{}],['product',product.key,product.name,{brand:product.brand,category:product.category}]]){const item=maps[dimension].get(key)||{name,current:0,previous:0,...extra};item[side]+=row.revenue;maps[dimension].set(key,item);}
+ const maps={channel:new Map(['마켓플레이스','로켓그로스'].map(name=>[name,{name,current:0,previous:0,currentQuantity:0,previousQuantity:0}])),category:new Map(['사료','영양제','세정제','미분류'].map(name=>[name,{name,current:0,previous:0,currentQuantity:0,previousQuantity:0}])),brand:new Map(),product:new Map()};let currentTotal=0,previousTotal=0,currentQuantity=0,previousQuantity=0;
+ for(const row of base){const side=inRange(row,current)?'current':'previous',profile=productProfile(row,overrides[productIdentity(row)]),product=productKeys.get(productIdentity(row));const units=row.quantity*profile.packSize;if(side==='current'){currentTotal+=row.revenue;currentQuantity+=units}else{previousTotal+=row.revenue;previousQuantity+=units}
+  for(const [dimension,key,name,extra]of [['channel',row.platform,row.platform,{}],['category',profile.category,profile.category,{}],['brand',profile.brand,profile.brand,{}],['product',product.key,product.name,{brand:product.brand,category:product.category}]]){const item=maps[dimension].get(key)||{name,current:0,previous:0,currentQuantity:0,previousQuantity:0,...extra};item[side]+=row.revenue;item[side+'Quantity']+=units;maps[dimension].set(key,item);}
  }
- const dimensions=Object.fromEntries(Object.entries(maps).map(([key,map])=>[key,[...map.values()].map(item=>({...item,...growth(item.current,item.previous)})).sort((a,b)=>b.current-a.current||b.previous-a.previous)]));
- return {currentTotal,previousTotal,...growth(currentTotal,previousTotal),dimensions};
+ const dimensions=Object.fromEntries(Object.entries(maps).map(([key,map])=>[key,[...map.values()].map(item=>({...item,...growth(item.current,item.previous),quantityDelta:item.currentQuantity-item.previousQuantity,quantityRate:growth(item.currentQuantity,item.previousQuantity).rate,quantityLabel:growth(item.currentQuantity,item.previousQuantity).label})).sort((a,b)=>b.current-a.current||b.previous-a.previous)]));
+ return {currentTotal,previousTotal,currentQuantity,previousQuantity,...growth(currentTotal,previousTotal),dimensions};
 }
 export function alignedDailySeries(rows,{current,previous,currency}){
  return [current,previous].map((range,index)=>{const values=new Map();for(const row of rows){if(row.currency!==currency||!inRange(row,range))continue;const day=paymentDate(row.paidAt);values.set(day,(values.get(day)||0)+row.revenue)}return {name:index?'이전 기간':'선택 기간',values:Array.from({length:(stamp(range.to)-stamp(range.from))/DAY+1},(_,i)=>values.get(iso(stamp(range.from)+i*DAY))||0),from:range.from};});
+}
+
+export function chronologicalTrend(rows,{current,previous,currency,mode}){
+ const from=previous.from,to=current.to,selected=rows.filter(row=>row.currency===currency),points=mode==='month'?timeSeries(selected,{from,to,mode:'week',coverage:{from,to}}):Array.from({length:(stamp(to)-stamp(from))/DAY+1},(_,i)=>({from:iso(stamp(from)+i*DAY),to:iso(stamp(from)+i*DAY),value:0}));
+ if(mode!=='month'){const lookup=new Map(points.map(point=>[point.from,point]));for(const row of selected){const point=lookup.get(paymentDate(row.paidAt));if(point)point.value+=row.revenue;}}
+ return {points,labels:points.map(p=>p.from===p.to?p.from:p.from+' ~ '+p.to),values:points.map(p=>p.value),colors:mode==='month'?null:points.map(p=>p.from>=current.from?'#6658e5':'#16b49f')};
 }
