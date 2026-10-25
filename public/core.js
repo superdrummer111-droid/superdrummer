@@ -1,6 +1,18 @@
 const koreaDateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'});
 export const statuses={ACCEPT:'결제완료',INSTRUCT:'상품준비중',DEPARTURE:'배송지시',DELIVERING:'배송중',FINAL_DELIVERY:'배송완료',NONE_TRACKING:'업체 직접 배송'};
 export const money=value=>typeof value==='object'&&value!==null?Number(value.units??0)+Number(value.nanos??0)/1e9:Number(value??0);
+export const MARKET_REVENUE_BASIS='orderPrice-minus-discountPrice-v1';
+export function marketplaceRevenue(item,{quantity,price=0}){
+ const gross=item.orderPrice!=null?money(item.orderPrice):Number(quantity)*Number(price),discount=money(item.discountPrice);
+ if(!Number.isFinite(gross)||!Number.isFinite(discount)||gross<0||discount<0)throw Error('마켓플레이스 주문 금액/총 할인 금액이 유효하지 않습니다.');
+ if(item.canceled||quantity===0)return 0;
+ const net=Math.round((gross-discount+Number.EPSILON)*1e4)/1e4;if(net<0)throw Error('마켓플레이스 총 할인 금액이 주문 금액보다 큽니다.');return net;
+}
+export function refreshMarketplaceRevenue(row){
+ if(row.platform!=='마켓플레이스')return row;let item;try{item=JSON.parse(row.raw||'{}').item}catch{}
+ if(!item&&row['item.orderPrice.units']!=null)item={orderPrice:{units:row['item.orderPrice.units'],nanos:row['item.orderPrice.nanos']||0},discountPrice:{units:row['item.discountPrice.units']||0,nanos:row['item.discountPrice.nanos']||0},canceled:row['item.canceled']};
+ if(!item)return row;return {...row,revenue:marketplaceRevenue(item,{quantity:row.quantity,price:row.price}),revenueBasis:MARKET_REVENUE_BASIS};
+}
 // Preserve unsafe integer identifiers while leaving quoted text and normal amounts untouched.
 export function parseApiJson(text){
  let output='',index=0;const number=/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/y;
@@ -44,11 +56,11 @@ export function normalize(orders,platform){return orders.flatMap(order=>(order.o
  let quantity,quantitySource;
  if(rg){if(item.salesQuantity!=null&&String(item.salesQuantity).trim()!==''){quantity=Number(item.salesQuantity);quantitySource='salesQuantity';}else if(item.salesAmount!=null&&price>0){const value=money(item.salesAmount)/price;if(Math.abs(value-Math.round(value))>1e-7)throw new Error('상품매출 ÷ 판매단가가 정수가 아니므로 로켓그로스 수량을 확정할 수 없습니다.');quantity=Math.round(value);quantitySource='salesAmount ÷ unitSalesPrice';}else throw new Error('로켓그로스 salesQuantity와 명시된 상품매출이 없어 수량을 확인할 수 없습니다. 순판매 엑셀을 사용하세요.');}
  else{quantity=item.canceled?0:Math.max(0,Number(item.shippingCount??0)-Number(item.cancelCount??0)-Number(item.holdCountForCancel??0));quantitySource='shippingCount - cancelCount - holdCountForCancel';}
- const revenue=rg&&item.salesAmount!=null?money(item.salesAmount):quantity*price;
+ const revenue=rg?(item.salesAmount!=null?money(item.salesAmount):quantity*price):marketplaceRevenue(item,{quantity,price});
  const currency=String(rg?(item.currency||'KRW'):(item.salesPrice?.currencyCode||'KRW')).trim().toUpperCase();
  if(!/^[A-Z]{3}$/.test(currency))throw new Error('API 응답의 통화 코드가 올바르지 않습니다.');
  if(!Number.isFinite(quantity)||!Number.isFinite(price)||quantity<0||price<0||!Number.isFinite(revenue)||revenue<0||rg&&!Number.isInteger(quantity))throw new Error('수량 또는 가격이 잘못된 주문 데이터입니다.');
- return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue,quantitySource,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
+ return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue,...(!rg?{revenueBasis:MARKET_REVENUE_BASIS}:{}),quantitySource,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
 }))}
 export function mergeRows(oldRows,newRows){const map=new Map(oldRows.map(r=>[r.id,r]));newRows.forEach(r=>map.set(r.id,r));return [...map.values()]}
 export function aggregate(rows){const products=new Map(),platforms=new Map();let quantity=0,revenue=0;for(const row of rows){quantity+=row.quantity;revenue+=row.revenue;platforms.set(row.platform,(platforms.get(row.platform)||0)+row.revenue);const key=JSON.stringify([row.platform,row.vendorItemId,row.currency]);const p=products.get(key)||{platform:row.platform,vendorItemId:row.vendorItemId,productName:row.productName,quantity:0,revenue:0};p.quantity+=row.quantity;p.revenue+=row.revenue;products.set(key,p)}return {quantity,revenue,platforms,products:[...products.values()].sort((a,b)=>b.revenue-a.revenue),orders:new Set(rows.map(r=>r.platform+':'+r.orderId)).size}}

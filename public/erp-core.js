@@ -1,5 +1,5 @@
 import {defaultMapping,mappingChannel,createMappingEvaluator} from './erp-mapping.js';
-import {money,paymentDate,validateRange} from './core.js';
+import {money,paymentDate,validateRange,refreshMarketplaceRevenue} from './core.js';
 import {ERP_SCHEMA,ERP_HEADER_ROWS} from './erp-schema.js';
 export {ERP_SCHEMA,ERP_HEADER_ROWS};
 export const clean=value=>String(value??'').replace(/\u00a0/g,' ').trim();
@@ -65,12 +65,12 @@ const round=(value,digits=0)=>Math.round((value+Number.EPSILON)*10**digits)/10**
 function rawItem(row){if(row.raw){try{return JSON.parse(row.raw)}catch{}}return {item:{},order:{}}}
 export function erpSources(apiRows,excelRows,settings){
  validateRange(settings.from,settings.to);const selected=[],excluded=[];
- for(const row of apiRows){if(row.platform==='로켓그로스'&&(settings.mode==='excel'||!settings.rocket))continue;if(row.platform==='마켓플레이스'&&!settings.market)continue;
+ for(const original of apiRows){const row=refreshMarketplaceRevenue(original);if(row.platform==='로켓그로스'&&(settings.mode==='excel'||!settings.rocket))continue;if(row.platform==='마켓플레이스'&&!settings.market)continue;
   const raw=rawItem(row),isMarket=row.platform==='마켓플레이스',date=paymentDate(isMarket?(row['item.confirmDate']||raw.item.confirmDate):row.paidAt);
   if(!date){excluded.push({optionId:row.vendorItemId,reason:isMarket?'구매확정일 없음':'결제일 없음',orderId:row.orderId});continue}if(date<settings.from||date>settings.to)continue;
   const quantityInfo=inferQuantity(row.quantity,row.revenue,row.price);if(!quantityInfo.quantity){excluded.push({optionId:row.vendorItemId,reason:'유효 수량 0',orderId:row.orderId});continue}
-  let revenue=row.revenue;
-  if(isMarket){const item=raw.item,ordered=Number(item.shippingCount??quantityInfo.quantity),discount=money(item.discountPrice),gross=item.orderPrice!=null?money(item.orderPrice):row.price*ordered;if(ordered<=0)throw Error('마켓플레이스 원 주문 수량을 확인하세요.');revenue=round((gross-discount)*quantityInfo.quantity/ordered,4);}
+  const revenue=row.revenue;
+
   if(!Number.isFinite(revenue)||revenue<0)throw Error('상품매출이 유효하지 않습니다: '+row.vendorItemId);
   selected.push({...row,quantity:quantityInfo.quantity,revenue,quantitySource:row.quantitySource||quantityInfo.source,issueDate:isMarket?date:settings.to,allocationDate:date,remark:isMarket?[row['order.orderer.name']||raw.order.orderer?.name,row.receiver||raw.order.receiver?.name].filter(Boolean).join('/'):'',origin:'API'});
  }

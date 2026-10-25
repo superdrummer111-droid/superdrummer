@@ -11,7 +11,7 @@ export function mappingChannel(source){return source.platform==='마켓플레이
 export function readMappings(storage=globalThis.localStorage){let saved={};try{saved=JSON.parse(storage?.getItem(MAPPING_KEY)||'{}')}catch{}return Object.fromEntries(Object.keys(MAPPING_CHANNELS).map(channel=>{const config={...defaultMapping(channel),...saved?.[channel],rules:{...defaultMapping(channel).rules,...saved?.[channel]?.rules}};if(config.rules.ISU_DT.type==='field'&&config.rules.ISU_DT.value==='issueDate')config.rules.ISU_DT={...defaultMapping(channel).rules.ISU_DT};return [channel,config]}));}
 export function sourceFieldLabel(key,channel,rawLabel=key){const market=channel==='market',excel=channel==='excel';const labels={
  saleQuantity:excel?'순판매수량 · 순 판매 상품 수(전체 거래 상품 수 - 취소 상품 수) · 원본: 엑셀':market?'유효 판매수량 · shippingCount − cancelCount − holdCountForCancel · 원본: orderItems[]':'판매수량 · salesQuantity · 원본: orderItems[]',
- salesAmount:excel?'순판매금액 · 순 판매 금액(전체 거래 금액 - 취소 금액) · 원본: 엑셀':market?'상품 매출 · orderPrice − discountPrice · 원본: orderItems[] (취소 제외)':'상품 매출 · salesAmount 또는 salesQuantity × unitSalesPrice · 원본: orderItems[]',
+ salesAmount:excel?'순판매금액 · 순 판매 금액(전체 거래 금액 - 취소 금액) · 원본: 엑셀':market?'상품 매출 · orderPrice − discountPrice · 원본: orderItems[].orderPrice − orderItems[].discountPrice':'상품 매출 · salesAmount 또는 salesQuantity × unitSalesPrice · 원본: orderItems[]',
  shippingQuantity:'출고수량 · SO_QT · 계산값 (LOT 배부 후)',weight:'가중치 · weight · 원본: 코드표',
  'item.confirmDate':'구매확정일 · confirmDate · 원본: orderItems[].confirmDate',paidAt:'결제일시 · paidAt · 원본: paidAt',
  'settings.to':'조회기간 종료일 · to · 원본: ERP 생성 조건',
