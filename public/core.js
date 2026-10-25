@@ -2,16 +2,17 @@ const koreaDateFormatter=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',
 export const statuses={ACCEPT:'결제완료',INSTRUCT:'상품준비중',DEPARTURE:'배송지시',DELIVERING:'배송중',FINAL_DELIVERY:'배송완료',NONE_TRACKING:'업체 직접 배송'};
 export const money=value=>typeof value==='object'&&value!==null?Number(value.units??0)+Number(value.nanos??0)/1e9:Number(value??0);
 export const MARKET_REVENUE_BASIS='orderPrice-minus-discountPrice-v1';
-export function marketplaceRevenue(item,{quantity,price=0}){
+export function marketplaceAmounts(item,{quantity,price=0}){
  const gross=item.orderPrice!=null?money(item.orderPrice):Number(quantity)*Number(price),discount=money(item.discountPrice);
  if(!Number.isFinite(gross)||!Number.isFinite(discount)||gross<0||discount<0)throw Error('마켓플레이스 주문 금액/총 할인 금액이 유효하지 않습니다.');
- if(item.canceled||quantity===0)return 0;
- const net=Math.round((gross-discount+Number.EPSILON)*1e4)/1e4;if(net<0)throw Error('마켓플레이스 총 할인 금액이 주문 금액보다 큽니다.');return net;
+ if(item.canceled||quantity===0)return {orderAmount:gross,discountAmount:discount,revenue:0};
+ const net=Math.round((gross-discount+Number.EPSILON)*1e4)/1e4;if(net<0)throw Error('마켓플레이스 총 할인 금액이 주문 금액보다 큽니다.');return {orderAmount:gross,discountAmount:discount,revenue:net};
 }
+export function marketplaceRevenue(item,options){return marketplaceAmounts(item,options).revenue;}
 export function refreshMarketplaceRevenue(row){
  if(row.platform!=='마켓플레이스')return row;let item;try{item=JSON.parse(row.raw||'{}').item}catch{}
  if(!item&&row['item.orderPrice.units']!=null)item={orderPrice:{units:row['item.orderPrice.units'],nanos:row['item.orderPrice.nanos']||0},discountPrice:{units:row['item.discountPrice.units']||0,nanos:row['item.discountPrice.nanos']||0},canceled:row['item.canceled']};
- if(!item)return row;return {...row,revenue:marketplaceRevenue(item,{quantity:row.quantity,price:row.price}),revenueBasis:MARKET_REVENUE_BASIS};
+ if(!item)return row;return {...row,...marketplaceAmounts(item,{quantity:row.quantity,price:row.price}),revenueBasis:MARKET_REVENUE_BASIS};
 }
 // Preserve unsafe integer identifiers while leaving quoted text and normal amounts untouched.
 export function parseApiJson(text){
@@ -33,7 +34,7 @@ export function splitDateRanges(from,to,maxDays=31){
  return ranges;
 }
 export function marketDateRanges(from,to){return splitDateRanges(from,to,31).map(range=>dateRange(range.from,range.to));}
-export function orderSummary(rows){const currencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total)}return {rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
+export function orderSummary(rows){const currencies=new Map(),rawCurrencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total);if(row.platform==='마켓플레이스'){const raw=rawCurrencies.get(row.currency)||{orderAmount:0,discountAmount:0};raw.orderAmount+=row.orderAmount??0;raw.discountAmount+=row.discountAmount??0;rawCurrencies.set(row.currency,raw)}}return {rawCurrencies,rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
 export function rocketListPath(vendorId){if(!/^[A-Za-z0-9_-]+$/.test(vendorId))throw new Error('판매자 ID를 확인하세요.');return `/v2/providers/rg_open_api/apis/api/v1/vendors/${vendorId}/rg/orders`;}
 export function rocketDateRanges(from,to){return splitDateRanges(from,to,30).map(range=>({paidDateFrom:range.from.replaceAll('-',''),paidDateTo:range.to.replaceAll('-','')}));}
 export function paymentTime(value){if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('결제 타임스탬프가 올바르지 않습니다.');return new Date(value).toISOString();}return String(value??'');}
@@ -60,7 +61,7 @@ export function normalize(orders,platform){return orders.flatMap(order=>(order.o
  const currency=String(rg?(item.currency||'KRW'):(item.salesPrice?.currencyCode||'KRW')).trim().toUpperCase();
  if(!/^[A-Z]{3}$/.test(currency))throw new Error('API 응답의 통화 코드가 올바르지 않습니다.');
  if(!Number.isFinite(quantity)||!Number.isFinite(price)||quantity<0||price<0||!Number.isFinite(revenue)||revenue<0||rg&&!Number.isInteger(quantity))throw new Error('수량 또는 가격이 잘못된 주문 데이터입니다.');
- return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue,...(!rg?{revenueBasis:MARKET_REVENUE_BASIS}:{}),quantitySource,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
+ return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue,...(!rg?{...marketplaceAmounts(item,{quantity,price}),revenueBasis:MARKET_REVENUE_BASIS}:{}),quantitySource,currency,paidAt:paymentTime(order.paidAt??order.orderedAt??''),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
 }))}
 export function mergeRows(oldRows,newRows){const map=new Map(oldRows.map(r=>[r.id,r]));newRows.forEach(r=>map.set(r.id,r));return [...map.values()]}
 export function aggregate(rows){const products=new Map(),platforms=new Map();let quantity=0,revenue=0;for(const row of rows){quantity+=row.quantity;revenue+=row.revenue;platforms.set(row.platform,(platforms.get(row.platform)||0)+row.revenue);const key=JSON.stringify([row.platform,row.vendorItemId,row.currency]);const p=products.get(key)||{platform:row.platform,vendorItemId:row.vendorItemId,productName:row.productName,quantity:0,revenue:0};p.quantity+=row.quantity;p.revenue+=row.revenue;products.set(key,p)}return {quantity,revenue,platforms,products:[...products.values()].sort((a,b)=>b.revenue-a.revenue),orders:new Set(rows.map(r=>r.platform+':'+r.orderId)).size}}
