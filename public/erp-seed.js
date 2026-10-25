@@ -1,4 +1,422 @@
-// Business-specific catalog and inventory are imported locally by the user.
-// Never embed real inventory quantities in public source or static web assets.
-export const SEED_CATALOG=[];
+// User-provided default option catalog; saved browser edits take precedence.
+export const SEED_CATALOG=[
+  {
+    "optionId": "92218748062",
+    "itemCode": "NNT3020",
+    "itemName": "NEW 뉴트리탑 어덜트 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 1,
+    "productId": "8403037986"
+  },
+  {
+    "optionId": "94489962503",
+    "itemCode": "NNT3020",
+    "itemName": "NEW 뉴트리탑 어덜트 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 2,
+    "productId": "8403037986"
+  },
+  {
+    "optionId": "94489962504",
+    "itemCode": "NNT3020",
+    "itemName": "NEW 뉴트리탑 어덜트 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 3,
+    "productId": "8403037986"
+  },
+  {
+    "optionId": "91207431025",
+    "itemCode": "NNT3030",
+    "itemName": "NEW 뉴트리탑 시니어 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 1,
+    "productId": "8621514027"
+  },
+  {
+    "optionId": "92181120798",
+    "itemCode": "NNT3040",
+    "itemName": "NEW 뉴트리탑 면역 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 1,
+    "productId": "8675325494"
+  },
+  {
+    "optionId": "92670866062",
+    "itemCode": "AFS2401",
+    "itemName": "뉴앤힐 올리핏 치킨 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814440795"
+  },
+  {
+    "optionId": "92671279417",
+    "itemCode": "AFS2402",
+    "itemName": "뉴앤힐 올리핏 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814440795"
+  },
+  {
+    "optionId": "92671285904",
+    "itemCode": "AFS2403",
+    "itemName": "뉴앤힐 올리핏 연어와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814440795"
+  },
+  {
+    "optionId": "92671339499",
+    "itemCode": "AFS2404",
+    "itemName": "뉴앤힐 올리핏 소고기와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814440795"
+  },
+  {
+    "optionId": "92671436893",
+    "itemCode": "NHWF150",
+    "itemName": "뉴앤힐 워터프리폼폼 150ml",
+    "brand": "뉴앤힐 워시",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814617199"
+  },
+  {
+    "optionId": "92671521522",
+    "itemCode": "NHSS230",
+    "itemName": "뉴앤힐 실키앤소프트 샴푸 230ml",
+    "brand": "뉴앤힐 워시",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814635394"
+  },
+  {
+    "optionId": "92671577078",
+    "itemCode": "NHEC120",
+    "itemName": "뉴앤힐 이어케어 120ml",
+    "brand": "뉴앤힐 워시",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814645293"
+  },
+  {
+    "optionId": "92671817268",
+    "itemCode": "NHJAD60",
+    "itemName": "뉴앤힐 조인트 에이드 60T.42g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814694020"
+  },
+  {
+    "optionId": "92671817280",
+    "itemCode": "NHJAD60",
+    "itemName": "뉴앤힐 조인트 에이드 60T.42g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814694020"
+  },
+  {
+    "optionId": "92671862410",
+    "itemCode": "NHLAD60",
+    "itemName": "뉴앤힐 리버웰 에이드 60T.30g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814700998"
+  },
+  {
+    "optionId": "92671908856",
+    "itemCode": "NHCAD60",
+    "itemName": "뉴앤힐 카디 에이드 60T.60g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814708977"
+  },
+  {
+    "optionId": "92671908869",
+    "itemCode": "NHCAD60",
+    "itemName": "뉴앤힐 카디 에이드 60T.60g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": "8814708977"
+  },
+  {
+    "optionId": "93099210552",
+    "itemCode": "NNT3010",
+    "itemName": "NEW 뉴트리탑 퍼피 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "본품",
+    "weight": 1,
+    "productId": "8933931371"
+  },
+  {
+    "optionId": "95774568296",
+    "itemCode": "NHLAD60",
+    "itemName": "뉴앤힐 리버웰 에이드 60T.30g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95774568298",
+    "itemCode": "NHLAD60",
+    "itemName": "뉴앤힐 리버웰 에이드 60T.30g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95774568301",
+    "itemCode": "NHCAD60",
+    "itemName": "뉴앤힐 카디 에이드 60T.60g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95774568302",
+    "itemCode": "NHCAD60",
+    "itemName": "뉴앤힐 카디 에이드 60T.60g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95774568445",
+    "itemCode": "NHJAD60",
+    "itemName": "뉴앤힐 조인트 에이드 60T.42g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95774568447",
+    "itemCode": "NHJAD60",
+    "itemName": "뉴앤힐 조인트 에이드 60T.42g",
+    "brand": "뉴앤힐 보조제",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95774577820",
+    "itemCode": "NHSS230",
+    "itemName": "뉴앤힐 실키앤소프트 샴푸 230ml",
+    "brand": "뉴앤힐 워시",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95888293399",
+    "itemCode": "AFS2403",
+    "itemName": "뉴앤힐 올리핏 연어와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95881279492",
+    "itemCode": "AFS2401",
+    "itemName": "뉴앤힐 올리핏 치킨 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95774573584",
+    "itemCode": "NHEC120",
+    "itemName": "뉴앤힐 이어케어 120ml",
+    "brand": "뉴앤힐 워시",
+    "projectCode": "203",
+    "project": "펫의약생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95881279495",
+    "itemCode": "AFS2401",
+    "itemName": "뉴앤힐 올리핏 치킨 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95881283666",
+    "itemCode": "AFS2402",
+    "itemName": "뉴앤힐 올리핏 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95888274310",
+    "itemCode": "AFS2404",
+    "itemName": "뉴앤힐 올리핏 소고기와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "95888274311",
+    "itemCode": "AFS2404",
+    "itemName": "뉴앤힐 올리핏 소고기와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 2,
+    "productId": ""
+  },
+  {
+    "optionId": "95888293398",
+    "itemCode": "AFS2403",
+    "itemName": "뉴앤힐 올리핏 연어와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 3,
+    "productId": ""
+  },
+  {
+    "optionId": "93127763843",
+    "itemCode": "AFS2403",
+    "itemName": "뉴앤힐 올리핏 연어와 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": ""
+  },
+  {
+    "optionId": "93434275115",
+    "itemCode": "AFS2402",
+    "itemName": "뉴앤힐 올리핏 오리 2.4kg",
+    "brand": "올리핏",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": ""
+  },
+  {
+    "optionId": "9716438700",
+    "itemCode": "NNT3040",
+    "itemName": "NEW 뉴트리탑 면역 강아지사료 전연령 노령견 소프트사료 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": ""
+  },
+  {
+    "optionId": "8403037986",
+    "itemCode": "NNT3020",
+    "itemName": "유한양행 어덜트 뉴트리탑 소프트사료",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": ""
+  },
+  {
+    "optionId": "7973091039",
+    "itemCode": "NNT3030",
+    "itemName": "NEW 뉴트리탑 시니어 강아지사료 노령견 소프트사료 3kg",
+    "brand": "SB뉴트리탑",
+    "projectCode": "202",
+    "project": "펫푸드생산부",
+    "mainProduct": "",
+    "weight": 1,
+    "productId": ""
+  }
+];
 export const SEED_INVENTORY=[];

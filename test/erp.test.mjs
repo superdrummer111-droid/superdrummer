@@ -9,7 +9,7 @@ const catalog=[{optionId:'111',itemCode:'SKU',itemName:'상품',brand:'브랜드
 const inventory=[{warehouse:'7000',location:'7110',itemCode:'SKU',lot:'old-20271231',closing:2},{warehouse:'7000',location:'7110',itemCode:'SKU',lot:'new-20281231',closing:8},{warehouse:'7000',location:'7120',itemCode:'SKU',lot:'rocket-20271231',closing:20}];
 const settings={from:'2026-10-01',to:'2026-10-07',mode:'api',market:true,rocket:true,warehouse:'7000',manager:''};
 const source=(extra={})=>({platform:'마켓플레이스',vendorItemId:'111',orderId:'22000009546234',issueDate:'2026-10-07',quantity:1,revenue:3500,currency:'KRW',remark:'주문자/수취인',...extra});
-test('공개 소스에는 사용자의 코드표나 실재고 수치를 넣지 않는다',()=>{assert.deepEqual(SEED_CATALOG,[]);assert.deepEqual(SEED_INVENTORY,[])});
+test('요청한 기본 코드표는 포함하고 실제 재고는 포함하지 않는다',()=>{assert.equal(SEED_CATALOG.length,38);assert.equal(SEED_CATALOG.find(r=>r.optionId==='95774573584').weight,3);assert.equal(new Set(SEED_CATALOG.map(r=>r.optionId)).size,38);assert.deepEqual(SEED_INVENTORY,[])});
 test('기말재고만 있는 ERP 텍스트와 JSON 및 큰 ID를 인식한다',()=>{
  const matrix=parseDelimited('창고코드\t장소코드\t품번\tLOT No\t기말재고\n7000\t7110\tSKU\tLOT-20271231\t1,414.00\\\n');const result=parseInventory(matrix);assert.deepEqual(result.errors,[]);assert.equal(result.rows[0].closing,1414);assert.equal(result.rows[0].lot,'LOT-20271231');
  const json=matrixFromJson({rows:[{'창고코드':'7000','장소코드':'7110','품번':'SKU','LOT No':'LOT-20271231','기말재고':'42'}]});assert.equal(parseInventory(json).rows[0].closing,42);assert.equal(parseInventory([...matrix,matrix[1]]).errors.length,1);

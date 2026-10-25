@@ -15,9 +15,9 @@ export function comparisonPeriods(mode,anchor,today){
  return {current,previous,partial,from:previous.from,to:current.to};
 }
 export function growth(current,previous){return {delta:current-previous,rate:previous===0?(current===0?0:null):(current-previous)/previous*100,label:previous===0&&current>0?'신규':null};}
-export function timeSeries(rows,{from,to,mode='month',coverage=null}){
+export function timeSeries(rows,{from,to,mode='month',coverage=null,covered=null}){
  validateRange(from,to);const points=[];
- for(let cursor=from;cursor<=to;){const bounds=periodBounds(cursor,mode),start=cursor,end=bounds.to>to?to:bounds.to;points.push({key:bounds.from,from:start,to:end,revenue:0,count:0,complete:!!coverage&&coverage.from<=start&&coverage.to>=end});cursor=iso(stamp(end)+DAY);}
+ for(let cursor=from;cursor<=to;){const bounds=periodBounds(cursor,mode),start=cursor,end=bounds.to>to?to:bounds.to;points.push({key:bounds.from,from:start,to:end,revenue:0,count:0,complete:covered?covered(start,end):!!coverage&&coverage.from<=start&&coverage.to>=end});cursor=iso(stamp(end)+DAY);}
  const pointMap=new Map(points.map(point=>[point.key,point])),dayKeys=new Map();
  for(const row of rows){const day=paymentDate(row.paidAt);if(!day||day<from||day>to)continue;let key=dayKeys.get(day);if(!key){key=periodBounds(day,mode).from;dayKeys.set(day,key);}const point=pointMap.get(key);if(point){point.revenue+=row.revenue;point.count++;}}
  return points.map(p=>({...p,value:p.complete||p.count?p.revenue:null,partial:p.from!==periodBounds(p.from,mode).from||p.to!==periodBounds(p.to,mode).to}));
