@@ -1,3 +1,4 @@
+import {handleNaver} from './naver-server.mjs';
 import http from 'node:http';
 import {readFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
@@ -7,6 +8,13 @@ export function createServer({request=fetch}={}){return http.createServer(async(
  const send=(status,body,type='application/json')=>{res.writeHead(status,{'Content-Type':type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'"});res.end(body)};
  try{
  const url=new URL(req.url,'http://localhost');
+ if(url.pathname==='/api/naver'){
+  if(req.method!=='POST')return send(405,JSON.stringify({message:'POST 요청이 필요합니다.'}));
+  if(req.headers.origin && ![`http://${req.headers.host}`,`https://${req.headers.host}`].includes(req.headers.origin))return send(403,JSON.stringify({message:'외부 출처 요청은 허용하지 않습니다.'}));
+  let body='';for await(const chunk of req){body+=chunk;if(body.length>16000)return send(413,JSON.stringify({message:'요청이 너무 큽니다.'}));}
+  let input;try{input=JSON.parse(body)}catch{return send(400,JSON.stringify({message:'잘못된 JSON 요청입니다.'}))}
+  try{const result=await handleNaver(input,request);return send(result.status,result.body)}catch(error){return send(error.name==='TimeoutError'?504:400,JSON.stringify({message:error.name==='TimeoutError'?'네이버 응답 시간이 초과되었습니다.':'네이버 연결 실패: '+(error.message.includes('네이버')||error.message.includes('허용되지')?error.message:'네트워크 연결을 확인하세요.')}));}
+ }
  if(url.pathname==='/api/coupang'){
   if(req.method!=='POST')return send(405,JSON.stringify({message:'POST 요청이 필요합니다.'}));
   if(req.headers.origin && req.headers.origin!==`http://${req.headers.host}` && req.headers.origin!==`https://${req.headers.host}`)return send(403,JSON.stringify({message:'외부 출처 요청은 허용하지 않습니다.'}));
@@ -22,6 +30,7 @@ export function createServer({request=fetch}={}){return http.createServer(async(
  if(req.method!=='GET')return send(405,'Method not allowed','text/plain');
  const names={'/erp-mapping.js':'erp-mapping.js','/erp-mapping-ui.js':'erp-mapping-ui.js','/revenue-check.js':'revenue-check.js','/revenue-check-ui.js':'revenue-check-ui.js','/':'index.html','/app.js':'app.js','/core.js':'core.js','/shared-sales.js':'shared-sales.js','/item-master.js':'item-master.js','/item-master-ui.js':'item-master-ui.js','/erp-core.js':'erp-core.js','/erp-ui.js':'erp-ui.js','/erp-seed.js':'erp-seed.js','/erp-schema.js':'erp-schema.js','/erp-workbook.js':'erp-workbook.js','/erp-clipboard.js':'erp-clipboard.js','/fetching.js':'fetching.js','/reporting.js':'reporting.js','/line-chart.js':'line-chart.js','/merchandising.js':'merchandising.js','/range-calendar.js':'range-calendar.js','/style.css':'style.css'};
  if(url.pathname==='/vendor/exceljs.min.js')return send(200,await readFile(fileURLToPath(new URL('./node_modules/exceljs/dist/exceljs.min.js',import.meta.url))),'text/javascript; charset=utf-8');
+ for(const module of ['naver-check-ui','naver','naver-seed','catalog-store','catalog-ui','executive-report'])names['/'+module+'.js']=module+'.js';
  const name=names[url.pathname];if(!name)return send(404,'Not found','text/plain');
  send(200,await readFile(publicDir+name),name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8');
  }catch(error){send(502,JSON.stringify({message:error.name==='TimeoutError'?'쿠팡 응답 시간이 초과되었습니다. 조회 범위를 줄여 다시 시도하세요.':'요청 처리에 실패했습니다. 네트워크 연결과 입력값을 확인하세요.'}))}

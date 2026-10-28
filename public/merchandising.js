@@ -1,3 +1,5 @@
+import {canceledOrder} from './core.js';
+import {matchedProduct} from './catalog-store.js';
 import {masterFor} from './item-master.js';
 const BRAND_RULES=[['뉴앤힐',/뉴\s*(?:앤|&|엔)\s*힐|new\s*(?:&|and|n)\s*heal/iu],['뉴트리탑',/뉴\s*트리\s*탑|nutri\s*top/iu]];
 const CATEGORIES=['사료','영양제','세정제','미분류'];
@@ -5,9 +7,10 @@ export {CATEGORIES};
 export const productIdentity=row=>JSON.stringify([row.platform,row.vendorItemId]);
 export function productProfile(row,override={}){
  const original=String(row.productName||'이름 없음').normalize('NFKC');
- const master=masterFor(row.vendorItemId);
+ const matched=matchedProduct(row);const master=matched?{name:matched.itemName,brand:matched.brand}:masterFor(row.vendorItemId);
  const brand=master.brand||override.brand||BRAND_RULES.find(([,pattern])=>pattern.test(original))?.[0]||'기타 / 미분류';
  let category=CATEGORIES.includes(master.category)?master.category:CATEGORIES.includes(override.category)?override.category:undefined;
+ if(matched){const mappedCategory=/뉴트리탑|올리핏/.test(matched.brand)?'사료':/워시/.test(matched.brand)?'세정제':/보조제/.test(matched.brand)?'영양제':null;if(mappedCategory)category=mappedCategory;}
  if(!category){
   const text=original+' '+(row['item.productCategoryLevel1']||'')+' '+(row['item.productCategoryLevel2']||'');
   category=/세정|세척|클리너|샴푸|치약|소독|탈취|워시|cleanser|shampoo/iu.test(text)?'세정제':/영양제|보조제|유산균|오메가|비타민|영양보충|supplement|probiotic/iu.test(text)?'영양제':/사료|건식|습식|주식캔|키블|dog\s*food|cat\s*food/iu.test(text)?'사료':'미분류';
@@ -23,15 +26,17 @@ export function productProfile(row,override={}){
  if(override.packSize!=null&&Number.isInteger(Number(override.packSize))&&Number(override.packSize)>=1&&Number(override.packSize)<=999)packSize=Number(override.packSize);
  for(const [canonical,pattern]of BRAND_RULES)name=name.replace(new RegExp(pattern.source,'giu'),canonical);
  name=name.replace(/반려견/gu,'강아지').replace(/반려묘/gu,'고양이').replace(/[\[\](),;_\-]+/gu,' ').replace(/\s+/gu,' ').trim();
+ if(row.platform==='네이버')packSize=1;else if(matched&&Number(matched.weight)>0)packSize=Number(matched.weight);
  if(master.name)name=master.name;
  const compact=name.toLowerCase().split(/\s+/u).sort().join('').replace(/[^\p{L}\p{N}.]/gu,'');
  const capacities=[...name.toLowerCase().matchAll(/\d+(?:\.\d+)?\s*(?:kg|mg|g|ml|l|정|캡슐|포|개입)/gu)].map(m=>m[0].replace(/\s/g,'')).sort().join('|');
  const variants=[...name.toLowerCase().matchAll(/어덜트|adult|퍼피|puppy|시니어|senior|키튼|kitten|고양이|강아지|연어|치킨|닭|소고기|양고기|오리|대형견|소형견/gu)].map(m=>m[0]).sort().join('|');
  const numbers=[...compact.matchAll(/\d+(?:\.\d+)?/g)].map(m=>m[0]).join('|');
- return {name,compact,brand,category,packSize,capacities,variants,numbers};
+ return {itemCode:matched?.itemCode||'',name,compact,brand,category,packSize,capacities,variants,numbers};
 }
 function grams(value){const result=new Set();for(let i=0;i<value.length-1;i++)result.add(value.slice(i,i+2));return result}
 export function similarProducts(a,b){
+ if(a.itemCode||b.itemCode)return !!a.itemCode&&a.itemCode===b.itemCode;
  if(a.brand!==b.brand||a.category!==b.category||a.capacities!==b.capacities||a.variants!==b.variants||a.numbers!==b.numbers)return false;
  if(a.compact===b.compact)return true;
  if(Math.min(a.compact.length,b.compact.length)<8)return false;
@@ -47,7 +52,7 @@ export function similarProducts(a,b){
 export function aggregateMerchandise(rows,overrides={}){
  const groups=[],brands=new Map(),categories=new Map(CATEGORIES.map(c=>[c,0]));let quantity=0,revenue=0,orderedQuantity=0;
  for(const row of rows){
-  const profile=productProfile(row,overrides[productIdentity(row)]),units=row.quantity*profile.packSize;
+  if(canceledOrder(row))continue;const profile=productProfile(row,overrides[productIdentity(row)]),units=row.quantity*profile.packSize;
   quantity+=units;orderedQuantity+=row.quantity;revenue+=row.revenue;
   brands.set(profile.brand,(brands.get(profile.brand)||0)+row.revenue);categories.set(profile.category,(categories.get(profile.category)||0)+row.revenue);
   let group=groups.find(g=>g.currency===row.currency&&similarProducts(g.profile,profile));
