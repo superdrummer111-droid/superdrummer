@@ -92,12 +92,34 @@ function exactUnits(value,scale,label){const scaled=Math.round(value*scale);if(!
 export function splitAmounts(total,quantities){
  const digits=Number.isInteger(total)?0:4,scale=10**digits,whole=exactUnits(total,scale,'금액'),units=quantities.map(q=>exactUnits(q,1e6,'수량')),sum=units.reduce((a,b)=>a+b,0n);if(sum<=0n)throw Error('금액 배부 수량이 0입니다.');const values=units.map(q=>whole*q/sum),remainders=units.map((q,i)=>({i,r:whole*q%sum})).sort((a,b)=>a.r===b.r?a.i-b.i:a.r>b.r?-1:1);let remaining=whole-values.reduce((a,b)=>a+b,0n);for(let i=0;remaining>0n;i++,remaining--)values[remainders[i%remainders.length].i]++;return values.map(v=>Number(v)/scale);
 }
-export function validateErpRow(row){const errors=[];for(const column of ERP_SCHEMA){const value=row[column.key];if(value==null||value===''){if(column.required)errors.push(column.label+' 필수값 누락');continue}if(column.type==='숫자'){const [length,decimals]=column.length.split(',').map(Number);if(typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>=10**(length-decimals)||Math.abs(value-round(value,decimals))>1e-7)errors.push(column.label+' 숫자 길이/소수 자릿수 초과');}else if(String(value).length>Number(column.length))errors.push(column.label+' 길이 초과');if(column.type==='날짜'&&!/^\d{8}$/.test(value))errors.push(column.label+' 날짜 형식 오류')}return errors;}
-export function buildErp({sources,catalog,naverCatalog=[],inventory,settings}){
+export function validateErpRow(row){const errors=[];for(const column of ERP_SCHEMA){const value=row[column.key];if(value==null||value===''){if(column.required)errors.push(column.label+' 필수값 누락');continue}if(['ISUG_AM','ISUV_AM','ISUH_AM'].includes(column.key)&&!Number.isSafeInteger(value))errors.push(column.label+'는 소수점 없이 정수 원 단위여야 합니다.');if(column.type==='숫자'){const [length,decimals]=column.length.split(',').map(Number);if(typeof value!=='number'||!Number.isFinite(value)||Math.abs(value)>=10**(length-decimals)||Math.abs(value-round(value,decimals))>1e-7)errors.push(column.label+' 숫자 길이/소수 자릿수 초과');}else if(String(value).length>Number(column.length))errors.push(column.label+' 길이 초과');if(column.type==='날짜'&&!/^\d{8}$/.test(value))errors.push(column.label+' 날짜 형식 오류')}return errors;}
+export function buildErp({sources,catalog,naverCatalog=[],erpMaster=[],inventory,settings}){
  const mapping=new Map(),errors=[],warnings=[],output=[],audit=[];for(const entry of catalog){if(mapping.has(String(entry.optionId)))errors.push('코드표 옵션ID 중복: '+entry.optionId);mapping.set(String(entry.optionId),entry)}
  const stock=inventory.map((entry,index)=>({...entry,index,available:Math.max(0,entry.closing),expiry:expiryDate(entry.lot)}));
  const prepared=[];for(const [index,source]of sources.entries()){const prefix=`${source.platform} / 옵션 ${source.vendorItemId}${source.orderId?' / 주문 '+source.orderId:''}`;try{const base=settings.mappings?.[mappingChannel(source)]||defaultMapping(mappingChannel(source)),config=source.kind==='shipping'?{...base,rules:{...base.rules,ITEM_CD:{type:'constant',value:'10019'},SO_QT:{type:'constant',value:1},ISU_QT:{type:'constant',value:1},ISUH_AM:{type:'field',value:'shippingAmount'},PJT_CD:{type:'blank'},LOT_NB:{type:'blank'}}}:base,sourceCatalog=source.kind==='shipping'?[{productId:source.productId,optionManageCode:source.optionManageCode,itemCode:'10019',itemName:'배송비',brand:'',projectCode:'',project:'',weight:1}]:source.platform==='네이버'?naverCatalog:catalog,pre=createMappingEvaluator({source,catalog:sourceCatalog,settings,mapping:config}),item=pre.item(),itemCode=pre.evaluate('ITEM_CD'),raw=rawItem(source),allocationDate=source.allocationDate||paymentDate(source.platform==='마켓플레이스'?(source['item.confirmDate']||raw.item.confirmDate):source.paidAt)||source.issueDate;validateRange(allocationDate,allocationDate);prepared.push({source,prefix,config,sourceCatalog,pre,item,itemCode,allocationDate,index});}catch(error){errors.push(prefix+' : '+error.message)}}
- const ordered=prepared.sort((a,b)=>String(a.itemCode).localeCompare(String(b.itemCode))||a.allocationDate.localeCompare(b.allocationDate)||String(a.source.orderId).localeCompare(String(b.source.orderId))||a.index-b.index);
+ const expanded=[];
+ for(const entry of prepared){
+  const {source,pre,item,config}=entry;
+  if(source.platform!=='네이버'||source.kind==='shipping'||entry.itemCode!=='AFS0000'){expanded.push(entry);continue;}
+  try{
+   const total=Number(pre.evaluate('ISUH_AM')),quantity=Number(pre.evaluate('SO_QT')),inventoryQuantity=Number(pre.evaluate('ISU_QT')),supply=Number(pre.evaluate('ISUG_AM'));
+   if(!Number.isSafeInteger(total)||total<0)throw Error('AFS0000 합계액은 정수 원 단위여야 합니다.');
+   if(!Number.isInteger(quantity)||quantity<=0||quantity!==inventoryQuantity)throw Error('AFS0000 세트 수량과 재고단위수량은 같은 양의 정수여야 합니다.');
+   if(!Number.isSafeInteger(supply)||supply<0||supply>total)throw Error('AFS0000 공급가를 확인하세요.');
+   const quarter=Math.round(total/4),amounts=[total-quarter*3,quarter,quarter,quarter];
+   if(amounts[0]<0)throw Error('AFS0031에 반올림 차액을 배부할 수 없는 소액입니다.');
+   const codes=['AFS0031','AFS0032','AFS0033','AFS0034'],names=['치킨','오리','연어와 오리','소고기와 오리'];
+   codes.forEach((code,index)=>{
+    const product=erpMaster.find(r=>r.itemCode===code)||naverCatalog.find(r=>r.itemCode===code)||catalog.find(r=>r.itemCode===code)||inventory.find(r=>r.itemCode===code)||{};
+    const bundleId='bundle:'+entry.index+':'+(source.id||source.orderId),child={...source,id:(source.id||source.orderId)+':'+code,bundleKey:bundleId+':'+code,bundleId,bundleParentCode:'AFS0000',bundleComponentCode:code,bundleTotal:total,bundleSupply:supply,bundleOriginalQuantity:source.quantity,revenue:amounts[index],productName:product.itemName||'뉴앤힐 올리핏 '+names[index]+' 30g 샘플',quantity,quantitySource:'AFS0000 세트 수량 × 구성품별 1개'};
+    const component={...item,...product,productId:item.productId,optionManageCode:item.optionManageCode,bundleKey:child.bundleKey,itemCode:code,itemName:child.productName,brand:product.brand||item.brand,projectCode:product.projectCode||item.projectCode,project:product.project||item.project,weight:1};
+    const childConfig={...config,allocation:'expiry',join:{sourceKey:'bundleKey',catalogKey:'bundleKey'},rules:{...config.rules,ITEM_CD:{type:'constant',value:code},PJT_CD:{type:'constant',value:component.projectCode},SO_QT:{type:'constant',value:quantity},ISU_QT:{type:'constant',value:quantity},ISUH_AM:{type:'constant',value:amounts[index]}}};
+    const evaluator=createMappingEvaluator({source:child,catalog:[component],settings,mapping:childConfig});
+    expanded.push({...entry,source:child,config:childConfig,sourceCatalog:[component],pre:evaluator,item:component,itemCode:code});
+   });
+  }catch(error){errors.push(entry.prefix+' : '+error.message);}
+ }
+ const ordered=expanded.sort((a,b)=>String(a.itemCode).localeCompare(String(b.itemCode))||a.allocationDate.localeCompare(b.allocationDate)||String(a.source.orderId).localeCompare(String(b.source.orderId))||a.index-b.index);
  for(const {source,prefix,config,sourceCatalog,pre,item,allocationDate}of ordered){
  try{
   if(source.currency!=='KRW')throw Error('KRW 이외 통화는 현재 ERP 양식 생성에서 지원하지 않습니다.');
@@ -111,8 +133,26 @@ export function buildErp({sources,catalog,naverCatalog=[],inventory,settings}){
   if(available+1e-8<inventoryQuantity)throw Error(`${warehouse}/${location} ${itemCode} 유효 LOT 재고 부족 (필요 ${inventoryQuantity}, 사용 가능 ${available})`);
   let remaining=inventoryQuantity;const allocations=[];for(const lot of lots){if(remaining<=1e-8)break;const take=Math.min(remaining,lot.available);lot.available=round(lot.available-take,6);remaining=round(remaining-take,6);allocations.push({lot,inventoryQuantity:take,quantity:round(quantity*take/inventoryQuantity,6)})}
   if(allocations.length){const last=allocations.at(-1);last.quantity=round(quantity-allocations.slice(0,-1).reduce((sum,a)=>sum+a.quantity,0),6);}if(allocations.some(a=>a.quantity<=0))throw Error('LOT 분할 출고수량이 ERP 소수 정밀도보다 작습니다.');
-  const amounts=splitAmounts(total,allocations.map(a=>a.inventoryQuantity));allocations.forEach((allocation,index)=>{const gross=amounts[index],evaluator=createMappingEvaluator({source,catalog:sourceCatalog,settings,mapping:config,lot:allocation.lot,quantity:allocation.quantity,inventoryQuantity:allocation.inventoryQuantity,revenue:gross}),row=Object.fromEntries(ERP_SCHEMA.map(c=>[c.key,['SO_QT','ISU_QT','ISUH_AM'].includes(c.key)?c.key==='SO_QT'?allocation.quantity:c.key==='ISU_QT'?allocation.inventoryQuantity:gross:evaluator.evaluate(c.key)]));const invalid=validateErpRow(row);invalid.forEach(message=>errors.push(prefix+' : '+message));output.push(row);audit.push({platform:source.platform,allocationSequence:audit.length+1,allocationDate,issueDate:row.ISU_DT,optionId:source.vendorItemId,orderId:source.orderId,productName:source.productName,itemCode:row.ITEM_CD,itemName:item.itemName,brand:item.brand,projectCode:row.PJT_CD,project:item.project,mainProduct:item.mainProduct,weight:item.weight,orderQuantity:source.quantity,quantity:allocation.quantity,lot:allocation.lot.lot,expiry:allocation.lot.expiry,revenue:gross,quantitySource:source.quantitySource,origin:source.origin});});
+  const amounts=splitAmounts(total,allocations.map(a=>a.inventoryQuantity));allocations.forEach((allocation,index)=>{const gross=amounts[index],evaluator=createMappingEvaluator({source,catalog:sourceCatalog,settings,mapping:config,lot:allocation.lot,quantity:allocation.quantity,inventoryQuantity:allocation.inventoryQuantity,revenue:gross}),row=Object.fromEntries(ERP_SCHEMA.map(c=>[c.key,['SO_QT','ISU_QT','ISUH_AM'].includes(c.key)?c.key==='SO_QT'?allocation.quantity:c.key==='ISU_QT'?allocation.inventoryQuantity:gross:evaluator.evaluate(c.key)]));const invalid=validateErpRow(row);invalid.forEach(message=>errors.push(prefix+' : '+message));output.push(row);audit.push({platform:source.platform,bundleId:source.bundleId,bundleParentCode:source.bundleParentCode,bundleComponentCode:source.bundleComponentCode,bundleOriginalQuantity:source.bundleOriginalQuantity,allocationSequence:audit.length+1,allocationDate,issueDate:row.ISU_DT,optionId:source.vendorItemId,orderId:source.orderId,productName:source.productName,itemCode:row.ITEM_CD,itemName:item.itemName,brand:item.brand,projectCode:row.PJT_CD,project:item.project,mainProduct:item.mainProduct,weight:item.weight,orderQuantity:source.quantity,quantity:allocation.quantity,lot:allocation.lot.lot,expiry:allocation.lot.expiry,revenue:gross,quantitySource:source.quantitySource,origin:source.origin});});
  }catch(error){errors.push(prefix+' : '+error.message)}
+ }
+
+ // Preserve the original bundle's supply/VAT after every component's LOT rounding.
+ const bundles=new Map();
+ for(const entry of expanded)if(entry.source.bundleId&&!bundles.has(entry.source.bundleId))bundles.set(entry.source.bundleId,entry.source);
+ for(const [bundleId,source]of bundles){
+  const indices=audit.flatMap((row,i)=>row.bundleId===bundleId?[i]:[]),codes=new Set(indices.map(i=>output[i].ITEM_CD));
+  if(codes.size!==4){errors.push('AFS0000 / 주문 '+source.orderId+' : 구성품 4개 모두의 LOT 배부가 완료되지 않았습니다.');continue;}
+  const total=indices.reduce((sum,i)=>sum+output[i].ISUH_AM,0);
+  if(total!==source.bundleTotal){errors.push('AFS0000 구성품 합계액이 원본 매출과 다릅니다.');continue;}
+  for(const i of indices){const row=output[i];if(!Number.isSafeInteger(row.ISUG_AM)||row.ISUG_AM<0||row.ISUG_AM>row.ISUH_AM)errors.push('AFS0000 '+row.ITEM_CD+' 공급가가 배부 합계액 범위를 벗어났습니다.');row.ISUV_AM=row.ISUH_AM-row.ISUG_AM;}
+  let delta=source.bundleSupply-indices.reduce((sum,i)=>sum+output[i].ISUG_AM,0);
+  for(const i of indices.filter(i=>output[i].ITEM_CD==='AFS0031')){
+   const row=output[i],change=delta>0?Math.min(delta,row.ISUH_AM-row.ISUG_AM):-Math.min(-delta,row.ISUG_AM);
+   row.ISUG_AM+=change;row.ISUV_AM=row.ISUH_AM-row.ISUG_AM;delta-=change;
+  }
+  if(delta)errors.push('AFS0000 / 주문 '+source.orderId+' : AFS0031에 공급가·부가세 반올림 차액을 배부할 수 없습니다.');
+  for(const i of indices)validateErpRow(output[i]).forEach(message=>errors.push('AFS0000 '+output[i].ITEM_CD+' : '+message));
  }
 
  // Keep the audit in the same order as its corresponding ERP row after export sorting.

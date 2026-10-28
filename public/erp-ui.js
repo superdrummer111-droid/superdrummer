@@ -51,7 +51,7 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi,
    if(options.mode==='excel'&&options.rocket&&(!rocket||rocket.from!==options.from||rocket.to!==options.to))throw Error('로켓그로스 엑셀의 집계 기간과 ERP 생성 기간이 같아야 합니다.');
    for(const [platform,required]of [['마켓플레이스',options.market],['로켓그로스',options.rocket&&options.mode==='api'],['네이버',options.naver]])if(required&&!getRows().some(r=>r.platform===platform))throw Error(platform+' API 데이터를 먼저 조회하거나 해당 채널 선택을 해제하세요.');
    const build=()=>{
-    const source=erpSources(getRows(),rocket?.rows||[],options),built=buildErp({sources:source.selected,catalog,naverCatalog:getCatalogData?.().naver||[],inventory:inventory.rows,settings:{...options,mappings:readMappings()}});
+    const source=erpSources(getRows(),rocket?.rows||[],options),built=buildErp({sources:source.selected,catalog,naverCatalog:getCatalogData?.().naver||[],erpMaster:getCatalogData?.().master||[],inventory:inventory.rows,settings:{...options,mappings:readMappings()}});
     built.warnings.push('LOT는 ERP 매핑 설정의 배부 순서를 사용하며 만료·0 이하 재고는 제외합니다. 다운로드는 원본 재고를 차감하지 않습니다.');
     built.reconciliation=reconcileErp(source.selected,built.rows,built.audit);
     if(options.naver&&!built.reconciliation.some(r=>r.platform==='네이버'))built.reconciliation.push({platform:'네이버',original:0,total:0,difference:0,status:'대상 없음'});
@@ -69,7 +69,7 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi,
    $('erp-status').textContent=`입력 ${source.selected.length}행 → LOT 배부 ${built.rows.length}행 · 오류 ${built.errors.length}건 · 수량 ${fmt(built.rows.reduce((s,r)=>s+r.SO_QT,0))} · 합계액 ${fmt(built.rows.reduce((s,r)=>s+r.ISUH_AM,0))}원`;
    $('erp-download').disabled=!built.valid;
    $('erp-preview').innerHTML=table(ERP_SCHEMA.map(c=>c.label),built.rows.map(r=>ERP_SCHEMA.map(c=>r[c.key])));
-   $('erp-audit').innerHTML=table(['채널','배부 순번','출고일자','배부 기준일','옵션ID','주문번호','품번','품명','브랜드','프로젝트코드','프로젝트','본품여부','가중치','주문수량','배부수량','LOT','금액','수량 근거'],built.audit.map(r=>[r.platform,r.allocationSequence,r.issueDate,r.allocationDate,r.optionId,r.orderId,r.itemCode,r.itemName,r.brand,r.projectCode,r.project,r.mainProduct,r.weight,r.orderQuantity,r.quantity,r.lot,r.revenue,r.quantitySource]));
+   $('erp-audit').innerHTML=table(['채널','세트 원품번','배부 순번','출고일자','배부 기준일','옵션ID','주문번호','품번','품명','브랜드','프로젝트코드','프로젝트','본품여부','가중치','주문수량','배부수량','LOT','금액','수량 근거'],built.audit.map(r=>[r.platform,r.bundleParentCode||'',r.allocationSequence,r.issueDate,r.allocationDate,r.optionId,r.orderId,r.itemCode,r.itemName,r.brand,r.projectCode,r.project,r.mainProduct,r.weight,r.orderQuantity,r.quantity,r.lot,r.revenue,r.quantitySource]));
    if(!built.valid)notice('ERP 생성 오류를 확인하세요. 오류가 있으면 엑셀로 내보내지 않습니다.',true);
   }catch(error){invalidate();$('erp-errors').innerHTML=messages([error.message]);notice(error.message,true)}finally{$('erp-generate').disabled=false;}
  };
