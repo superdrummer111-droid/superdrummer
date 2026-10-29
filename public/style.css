@@ -142,3 +142,6 @@
 
 #catalog-edit-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;pointer-events:none;padding:9px 16px;border:1px solid #dbe4ee;border-radius:8px;background:rgba(34,48,67,.94);color:#fff;font-size:13px;font-weight:500;line-height:1.4;box-shadow:0 4px 16px #16253b26;white-space:nowrap}
 #catalog-edit-toast[hidden]{display:none}
+
+#erp-settings>#erp-rocket-clear{width:auto;flex:0 0 auto;margin-left:auto;white-space:nowrap;padding:10px 12px;font-size:12px;border-color:#e8bac0;color:#b83a49;background:#fff7f8}
+#erp-settings>#erp-rocket-clear:disabled{opacity:.45}
