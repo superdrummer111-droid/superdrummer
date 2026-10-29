@@ -20,3 +20,8 @@ export function petFoodComparisonRows(items){
  const sum=key=>food.reduce((total,item)=>total+(Number(item[key])||0),0),previous=sum('previous'),current=sum('current'),previousQuantity=sum('previousQuantity'),currentQuantity=sum('currentQuantity');
  return [...food,{name:'펫푸드 소계',subtotal:true,previous,current,previousQuantity,currentQuantity,delta:current-previous,quantityDelta:currentQuantity-previousQuantity},...items.filter(item=>!food.includes(item))];
 }
+
+export function productPlatformQuantities(product){
+ const quantities=new Map();for(const variant of product.variants.values())quantities.set(variant.platform,(quantities.get(variant.platform)||0)+variant.units);
+ return ['마켓플레이스','로켓그로스','네이버'].filter(platform=>quantities.has(platform)).map(platform=>({platform,quantity:quantities.get(platform)}));
+}
