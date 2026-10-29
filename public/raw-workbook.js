@@ -16,5 +16,5 @@ export async function createRawWorkbook(ExcelJS,{rows,columns,platform='주문'}
 }
 export async function downloadRawOrders(options){
  let X=globalThis.ExcelJS;if(!X){await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='/vendor/exceljs.min.js';script.onload=resolve;script.onerror=()=>reject(Error('엑셀 모듈을 불러오지 못했습니다.'));document.head.append(script);});X=globalThis.ExcelJS;}
- const workbook=await createRawWorkbook(X,options),url=URL.createObjectURL(new Blob([await workbook.xlsx.writeBuffer()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a=document.createElement('a');a.href=url;a.download=`주문원본_${options.platform}_${options.from||''}_${options.to||''}.xlsx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ const workbook=await createRawWorkbook(X,options),url=URL.createObjectURL(new Blob([await workbook.xlsx.writeBuffer()],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a=document.createElement('a');a.href=url;a.download=`${options.filePrefix||'주문원본'}_${options.platform}_${options.from||''}_${options.to||''}.xlsx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
