@@ -834,3 +834,18 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 /* Fit plots inside their cards at every browser zoom level. */
 #sales-trend .line-svg,.comparison-trend .line-svg{min-width:0;min-height:0;overflow:hidden;flex:1}
 #sales-trend .line-svg svg,.comparison-trend .line-svg svg{width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%}
+/* Compact pie with a two-line legend beside it. */
+#dashboard .pie-summary-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) auto;gap:8px;align-items:center}
+#dashboard .pie-summary-layout>.filled-pie-wrap{grid-column:1;grid-row:1;width:100%;height:auto;min-height:0;max-height:240px;aspect-ratio:1;flex:none;margin:0}
+#dashboard .pie-summary-layout .filled-pie{display:block;width:100%;height:100%;max-height:none}
+#dashboard .pie-summary-layout>.pie-total{grid-column:1/-1;grid-row:2;margin:0;min-width:0}
+#dashboard .pie-summary-list{grid-column:2;grid-row:1;min-width:0;min-height:0;max-height:100%;overflow-y:auto;scrollbar-width:thin;align-self:center;width:100%}
+#dashboard .pie-summary-item{padding:9px 0;border-bottom:1px solid #eee9f5}
+#dashboard .pie-summary-item:last-child{border-bottom:0}
+#dashboard .pie-summary-name{display:flex;align-items:center;gap:5px;color:#4e4560;font-weight:600;font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+#dashboard .pie-summary-name i{width:6px;height:6px;border-radius:50%;flex:none}
+#dashboard .pie-summary-values{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px;padding-left:11px;margin-top:3px;font-size:10px;line-height:1.4;font-variant-numeric:tabular-nums}
+#dashboard .pie-summary-values strong{color:#27334b;white-space:nowrap;font-size:11px}
+#dashboard .pie-summary-values>span{color:#9485a8;white-space:nowrap}
+@media(min-width:1100px) and (max-width:1750px){#dashboard .pie-summary-layout{gap:6px;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}#dashboard .pie-summary-item{padding:7px 0}#dashboard .pie-summary-values strong{font-size:10px}}
+@media(max-width:1099px){#dashboard .revenue-card{min-height:280px;height:280px}}
