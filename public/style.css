@@ -139,3 +139,6 @@
 
 .catalog-editor [data-catalog-column="productId"]{width:100px;min-width:100px;max-width:100px}
 .catalog-editor td[data-catalog-column="productId"] input{box-sizing:border-box;width:100px;min-width:100px;max-width:100px;padding-inline:6px}
+
+#catalog-edit-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10000;pointer-events:none;padding:9px 16px;border:1px solid #dbe4ee;border-radius:8px;background:rgba(34,48,67,.94);color:#fff;font-size:13px;font-weight:500;line-height:1.4;box-shadow:0 4px 16px #16253b26;white-space:nowrap}
+#catalog-edit-toast[hidden]{display:none}
