@@ -824,3 +824,13 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
  .comparison-left{grid-template-rows:minmax(430px,1.25fr) minmax(270px,1fr)}
  #dashboard .filled-pie-wrap{height:clamp(160px,20vh,230px);flex-basis:clamp(160px,20vh,230px);min-height:160px}
 }
+/* Keep the query-mode control in its own reserved header space. */
+@media(min-width:1100px){
+ .dashboard-active header .header-actions,.report-view-active header .header-actions{width:218px;flex:none;justify-content:flex-end}
+ #dashboard .dashboard-toolbar,:is(#weekly,#monthly)>.toolbar{margin-right:230px;min-width:0;overflow-x:auto;scrollbar-width:none}
+ #dashboard .dashboard-toolbar::-webkit-scrollbar,:is(#weekly,#monthly)>.toolbar::-webkit-scrollbar{display:none}
+ :is(#weekly,#monthly) .comparison-periods{min-width:0;flex-shrink:0}
+}
+/* Fit plots inside their cards at every browser zoom level. */
+#sales-trend .line-svg,.comparison-trend .line-svg{min-width:0;min-height:0;overflow:hidden;flex:1}
+#sales-trend .line-svg svg,.comparison-trend .line-svg svg{width:100%;height:100%;min-width:0;min-height:0;max-width:100%;max-height:100%}
