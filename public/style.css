@@ -178,3 +178,7 @@ aside>.aside-bottom{padding-top:16px;flex-shrink:0}
 @media(max-height:800px) and (min-width:701px){aside{padding-top:22px;padding-bottom:18px}.sidebar-brand-logos{gap:10px;margin-bottom:14px}.sidebar-brand-logos>img{height:30px}.sidebar-brand-logos>img[alt="뉴앤힐"]{height:34px}aside>.nav-caption{margin-top:20px}.nav{padding-block:12px}}
 @media(max-width:700px){aside>.company-brand{align-items:flex-start}.company-brand>img{width:180px;height:42px}}
 @media(max-width:700px){aside>.aside-bottom{display:block;margin-top:14px;padding-top:12px;padding-bottom:0}.sidebar-brand-logos{grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:12px}.sidebar-brand-logos>img,.sidebar-brand-logos>img[alt="뉴앤힐"],.sidebar-brand-logos>img[alt="SB VETCARE"]{height:30px}}
+
+aside>.company-brand{align-items:center}
+.company-brand>small{width:100%;text-align:center;font-size:12px;letter-spacing:.3px;line-height:1.5}
+@media(max-width:700px){aside>.company-brand{align-items:center}.company-brand>small{display:block}}
