@@ -19,7 +19,7 @@ import {timeSeries,comparisonPeriods,comparisonData,alignedDailySeries,chronolog
 import {lineChart} from './line-chart.js';
 import {aggregateMerchandise,productProfile,productIdentity,CATEGORIES} from './merchandising.js';
 import {initializeRangeCalendar} from './range-calendar.js';
-import {statuses,normalize,aggregate,authorization,pages,rocketListPath,rocketDateRanges,dashboardRows,paymentDate,parseApiJson,marketDateRanges,orderSummary,validateRange,rawOrderFields,rawOrderSummary,rawSumField} from './core.js';
+import {statuses,normalize,aggregate,authorization,pages,rocketListPath,rocketKoreaDateRanges,filterRocketKoreaOrders,dashboardRows,paymentDate,parseApiJson,marketDateRanges,orderSummary,validateRange,rawOrderFields,rawOrderSummary,rawSumField} from './core.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=n=>new Intl.NumberFormat('ko-KR',{maximumFractionDigits:2}).format(n);
 const amount=(n,c=$('currency').value)=>new Intl.NumberFormat('ko-KR',{style:'currency',currency:c,maximumFractionDigits:c==='KRW'?0:2}).format(n);
@@ -97,7 +97,7 @@ async function loadMarket(vendor,from,to,status='ALL'){
 let lastRocketRequest=0;
 async function loadRocket(vendor,from,to){
  const orders=[];
- for(const range of rocketDateRanges(from,to)){
+ for(const range of rocketKoreaDateRanges(from,to)){
   const result=await requestCache.load(JSON.stringify(['rocket',vendor,range]),()=>pages(async token=>{
    const result=await api(rocketListPath(vendor),{...range,...(token?{nextToken:token}:{})});
    if(!Array.isArray(result.data))throw new Error('로켓그로스 응답의 data가 목록이 아닙니다.');
@@ -105,7 +105,7 @@ async function loadRocket(vendor,from,to){
   },count=>notice(`로켓그로스 ${range.paidDateFrom} ~ ${range.paidDateTo} · ${count}개 주문 수신`)),{fresh:requestFresh});
   progress(80,'로켓그로스 주문 페이지 수신');if(result.hit)queryStats.hits++;orders.push(...result.value);
  }
- return orders;
+ return filterRocketKoreaOrders(orders,from,to);
 }
 function prepareRows(orders,platform){const channel=platform==='로켓그로스'?'rg':'market',discovered=[];
  const prepared=normalize(orders,platform).map(row=>{const raw=JSON.parse(row.raw),sourceColumns=columnsBySource[channel];function flatten(value,prefix){for(const [key,val]of Object.entries(value)){const name=prefix+'.'+key;if(val!==null&&typeof val==='object'&&!Array.isArray(val))flatten(val,name);else{row[name]=typeof val==='object'?JSON.stringify(val):val;if(allowedColumn(name,channel)){if(!sourceColumns.some(c=>c.key===name))sourceColumns.push({key:name,visible:false});if(!discovered.includes(name))discovered.push(name)}}}}flatten(raw.order,'order');flatten(raw.item,'item');return row;});

@@ -17,7 +17,7 @@ test('웹페이지 제공 및 외부 목적지와 외부 출처의 중계 요청
 
 test('로켓그로스 상품의 수량과 가격 및 통화를 검증한다',()=>{
  const [row]=normalize([{orderId:2609170000,vendorId:'A12345678',paidAt:'2026-10-24T11:30:00',orderItems:[{vendorItemId:9001,productName:'로켓 상품',salesQuantity:3,salesPrice:'12500',currency:'krw'}]}],'로켓그로스');
- assert.equal(row.revenue,37500);assert.equal(row.quantity,3);assert.equal(row.currency,'KRW');assert.equal(row.paidAt,'2026-10-24T11:30:00');
+ assert.equal(row.revenue,37500);assert.equal(row.quantity,3);assert.equal(row.currency,'KRW');assert.equal(row.paidAt,'2026-10-24T11:30:00.000Z');
  assert.throws(()=>normalize([{orderItems:[{salesQuantity:1}]}],'로켓그로스'),/salesPrice/);
 });
 test('대시보드는 한국 결제일과 통화로 정확히 범위를 구분한다',async()=>{
