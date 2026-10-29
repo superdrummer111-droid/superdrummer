@@ -280,19 +280,19 @@ body>main{margin-left:var(--sidebar-rail);max-width:none;padding:20px 22px}
 .comparison-active #request-status:empty{display:none}
 .comparison-active #request-status{flex:none;margin:0 0 5px;font-size:10px}
 .comparison-active .view:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0}
-.comparison-analysis>.toolbar{flex:none;display:flex;align-items:center;flex-wrap:nowrap;padding:8px 12px;margin-bottom:10px;gap:12px;min-height:48px}
-.comparison-analysis>.toolbar .filter-group{align-items:center;flex-wrap:nowrap;gap:10px;flex:none}
-.comparison-analysis>.toolbar label{flex-direction:row;align-items:center;gap:6px;font-size:10px;white-space:nowrap}
-.comparison-analysis>.toolbar .shared-calendar-field{min-width:0}
-.comparison-analysis>.toolbar button,.comparison-analysis>.toolbar select{height:32px;font-size:10px;padding:6px 8px}
-.comparison-analysis>.toolbar>button{flex:none}
-.comparison-analysis .report-tabs{margin:0;gap:4px;flex-wrap:nowrap;flex:none}
-.comparison-analysis .report-tabs button{white-space:nowrap;font-size:10px}
-.comparison-analysis .comparison-periods{width:auto;flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0;line-height:1.3;overflow:hidden;font-size:9px;white-space:nowrap}
-.comparison-analysis .report-current-period{display:flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid #d1c8e1;border-radius:6px;background:#f4f0f9;color:#6d5a8c;font-size:9px;box-shadow:none}
-.comparison-analysis .report-current-period b{font-size:10px}
-.comparison-analysis .report-period-note{display:none}
-.comparison-analysis .report-previous-period{overflow:hidden;text-overflow:ellipsis;font-size:9px}
+:is(#weekly,#monthly)>.toolbar{flex:none;display:flex;align-items:center;flex-wrap:nowrap;padding:8px 12px;margin-bottom:10px;gap:12px;min-height:48px}
+:is(#weekly,#monthly)>.toolbar .filter-group{align-items:center;flex-wrap:nowrap;gap:10px;flex:none}
+:is(#weekly,#monthly)>.toolbar label{flex-direction:row;align-items:center;gap:6px;font-size:10px;white-space:nowrap}
+:is(#weekly,#monthly)>.toolbar .shared-calendar-field{min-width:0}
+:is(#weekly,#monthly)>.toolbar button,:is(#weekly,#monthly)>.toolbar select{height:32px;font-size:10px;padding:6px 8px}
+:is(#weekly,#monthly)>.toolbar>button{flex:none}
+:is(#weekly,#monthly) .report-tabs{margin:0;gap:4px;flex-wrap:nowrap;flex:none}
+:is(#weekly,#monthly) .report-tabs button{white-space:nowrap;font-size:10px}
+:is(#weekly,#monthly) .comparison-periods{width:auto;flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:0;line-height:1.3;overflow:hidden;font-size:9px;white-space:nowrap}
+:is(#weekly,#monthly) .report-current-period{display:flex;align-items:center;gap:5px;padding:6px 8px;border:1px solid #d1c8e1;border-radius:6px;background:#f4f0f9;color:#6d5a8c;font-size:9px;box-shadow:none}
+:is(#weekly,#monthly) .report-current-period b{font-size:10px}
+:is(#weekly,#monthly) .report-period-note{display:none}
+:is(#weekly,#monthly) .report-previous-period{overflow:hidden;text-overflow:ellipsis;font-size:9px}
 #weekly-body,#monthly-body{min-height:0}
 .comparison-analysis>#weekly-body,.comparison-analysis>#monthly-body{flex:1;display:flex;flex-direction:column;min-height:0}
 .comparison-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;flex:none;margin-bottom:10px}
@@ -338,13 +338,13 @@ body>main{margin-left:var(--sidebar-rail);max-width:none;padding:20px 22px}
 .dashboard-active #load-progress>div,.comparison-active #load-progress>div{gap:12px;font-size:10px;white-space:nowrap}
 .dashboard-active #load-progress progress,.comparison-active #load-progress progress{flex:1;width:auto;margin:0;height:6px}
 .dashboard-active #load-progress>small,.comparison-active #load-progress>small{display:none}
-@media(max-width:1599px){.comparison-analysis .report-current-period strong{display:none}.comparison-analysis .report-previous-period{display:none}.comparison-analysis>.toolbar{gap:8px}.comparison-workspace .comparison-product .comparison-scroll td.numeric{font-size:9px!important}}
-@media(max-width:1399px){.comparison-active>main{height:auto;min-height:100dvh;overflow:visible}.comparison-analysis>.toolbar{flex-wrap:wrap}.comparison-analysis .comparison-periods{min-width:250px;justify-content:flex-start}.comparison-workspace{min-height:780px;grid-template-columns:minmax(0,1fr) minmax(390px,33%)}.comparison-left{grid-template-rows:300px 180px 250px}.comparison-workspace .comparison-product .comparison-name-col{width:25%}}
+@media(max-width:1599px){:is(#weekly,#monthly) .report-current-period strong{display:none}:is(#weekly,#monthly) .report-previous-period{display:none}:is(#weekly,#monthly)>.toolbar{gap:8px}.comparison-workspace .comparison-product .comparison-scroll td.numeric{font-size:9px!important}}
+@media(max-width:1399px){.comparison-active>main{height:auto;min-height:100dvh;overflow:visible}:is(#weekly,#monthly)>.toolbar{flex-wrap:wrap}:is(#weekly,#monthly) .comparison-periods{min-width:250px;justify-content:flex-start}.comparison-workspace{min-height:780px;grid-template-columns:minmax(0,1fr) minmax(390px,33%)}.comparison-left{grid-template-rows:300px 180px 250px}.comparison-workspace .comparison-product .comparison-name-col{width:25%}}
 @media(max-width:1000px){.comparison-workspace{display:flex;flex-direction:column;min-height:0}.comparison-left{display:flex;flex-direction:column}.comparison-left>.comparison-trend{height:300px;flex:none}.comparison-left>.comparison-channel,.comparison-left>.comparison-brand{min-height:200px}.comparison-workspace>.comparison-product{max-height:600px;min-height:300px}.comparison-active header .header-actions label{display:none}}
-@media(max-width:700px){.comparison-analysis>.toolbar .filter-group{flex-wrap:wrap}.comparison-analysis>.toolbar label{font-size:9px}.comparison-analysis .comparison-periods{min-width:100%}.comparison-active header .header-actions #connect{display:none}.comparison-metrics{gap:6px}.comparison-metrics>.metric{padding:9px 7px}.comparison-metrics .metric>strong{font-size:17px}.comparison-metrics .metric>span{font-size:9px}.comparison-metrics .metric>small{font-size:8px}.comparison-metrics .comparison-change{display:block}.comparison-metrics .comparison-change small{font-size:10px}.comparison-workspace .comparison-scroll td,.comparison-workspace .comparison-scroll td.numeric{font-size:9px!important;letter-spacing:-.5px;padding-inline:2px}.comparison-workspace .comparison-scroll th{font-size:9px!important;padding-inline:2px}.comparison-analysis #weekly-calendar-range{width:140px}}
+@media(max-width:700px){:is(#weekly,#monthly)>.toolbar .filter-group{flex-wrap:wrap}:is(#weekly,#monthly)>.toolbar label{font-size:9px}:is(#weekly,#monthly) .comparison-periods{min-width:100%}.comparison-active header .header-actions #connect{display:none}.comparison-metrics{gap:6px}.comparison-metrics>.metric{padding:9px 7px}.comparison-metrics .metric>strong{font-size:17px}.comparison-metrics .metric>span{font-size:9px}.comparison-metrics .metric>small{font-size:8px}.comparison-metrics .comparison-change{display:block}.comparison-metrics .comparison-change small{font-size:10px}.comparison-workspace .comparison-scroll td,.comparison-workspace .comparison-scroll td.numeric{font-size:9px!important;letter-spacing:-.5px;padding-inline:2px}.comparison-workspace .comparison-scroll th{font-size:9px!important;padding-inline:2px}.comparison-analysis #weekly-calendar-range{width:140px}}
 @media print{.comparison-active>main{height:auto;overflow:visible;margin-left:0}.comparison-workspace,.comparison-left{display:block}.comparison-workspace .panel{overflow:visible}}
 .comparison-trend-chart{flex:1;min-height:0;display:flex;flex-direction:column}
-@media(max-width:700px){#dashboard .dashboard-toolbar .filter-group,.comparison-analysis>.toolbar .filter-group{flex:1 1 100%;min-width:0;max-width:100%}#dashboard .dashboard-toolbar label:first-child{flex-basis:100%}.comparison-analysis>.toolbar .report-tabs{flex-wrap:wrap}}
+@media(max-width:700px){#dashboard .dashboard-toolbar .filter-group,:is(#weekly,#monthly)>.toolbar .filter-group{flex:1 1 100%;min-width:0;max-width:100%}#dashboard .dashboard-toolbar label:first-child{flex-basis:100%}:is(#weekly,#monthly)>.toolbar .report-tabs{flex-wrap:wrap}}
 .comparison-workspace .comparison-channel .comparison-scroll td,.comparison-workspace .comparison-brand .comparison-scroll td{padding-block:3px;line-height:1.25}
 .comparison-metrics .report-current-metric>strong{color:#6d588c}
 
@@ -442,3 +442,247 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 .catalog-editor tbody:has(tr:hover) tr:focus-within:not(:hover)>.catalog-row-number{background:#f2f3f5;color:#687180;font-weight:400}
 .catalog-lookup-button{color:#8499a7;border-color:#a6b3c2;background:#f5f9fc}
 .catalog-lookup-button:hover,.catalog-lookup-button:focus-visible{color:#269bfa;border-color:#77b9f2;background:#e5f4ff}
+
+/* Compact operational workspaces: fixed viewport, scrolling data regions. */
+.operational-active>main{height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding:16px 20px}
+.operational-active main>header{flex:none;min-height:36px;margin:0 0 7px}
+.operational-active header .eyebrow,.operational-active header #page-description{display:none}
+.operational-active header h1{font-size:20px;margin:0}
+.operational-active header .header-actions label{flex-direction:row;align-items:center;gap:8px}
+.operational-active #shared-status{flex:none;font-size:9px;line-height:1.3;margin:0 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #request-status,.operational-active #load-progress{display:none!important}
+.operational-active #notice{position:fixed;right:22px;bottom:20px;max-width:460px;z-index:200;margin:0;padding:10px 14px;box-shadow:0 5px 24px #30223e1a;font-size:11px}
+.operational-active main>.view:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.operational-active .panel{box-shadow:none;border-color:#e7e1ee;border-radius:9px;margin-bottom:8px}
+.operational-active .section-head{align-items:center;gap:8px;margin-bottom:7px}
+.operational-active h2{font-size:13px}
+.operational-active .erp-tabs{flex:none;gap:5px;margin:0 0 8px;border-bottom:1px solid #e6dfef;padding-bottom:6px}
+.operational-active .erp-tabs button{font-size:11px;padding:7px 11px}
+#erp>[id^="erp-pane-"]:not([hidden]){display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.operational-info-button{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;font-size:10px!important;padding:5px 8px!important;height:27px}
+.operational-info-button>span{font-size:14px;color:#9b84b8}
+.operational-info-dialog{width:680px;max-width:calc(100vw - 32px);padding:22px;box-shadow:0 18px 65px #30223e2a;border-color:#ded4e9}
+.operational-info-dialog #operational-info-body{max-height:65vh;overflow:auto;font-size:12px;line-height:1.9;color:#7e6d8f}
+.operational-info-dialog #operational-info-body .hint{font-size:12px;line-height:1.9;margin:0 0 14px;white-space:normal;overflow:visible}
+/* Pin is always at the upper right, with the requested red pushpin silhouette. */
+#sidebar-pin{left:auto;right:7px;top:6px;width:29px;height:29px;border-radius:50%;background:#f8f5fb;border-color:#eee6f5;box-shadow:0 2px 5px #38244908}
+#sidebar-pin svg{transform:rotate(-4deg);filter:grayscale(.5);opacity:.55;transition:transform .15s,opacity .15s,filter .15s}
+#sidebar-pin:hover{background:#fff0ec;border-color:#f4cdbf}
+#sidebar-pin:hover svg,#sidebar-pin[aria-pressed="true"] svg{filter:none;opacity:1}
+#sidebar-pin[aria-pressed="true"]{background:#fff0e9;border-color:#f3bba8;box-shadow:0 2px 8px #e85b2b1a}
+#sidebar-pin[aria-pressed="true"] svg{transform:rotate(-12deg)}
+/* Order query band and full-width result grid. */
+.operational-active .orders-topbar{flex:none;display:grid;grid-template-columns:minmax(390px,30%) minmax(0,1fr);gap:16px;padding:12px;min-height:142px;margin-bottom:8px}
+.order-query-block{min-width:0;display:flex;flex-direction:column}
+.order-query-block>.tabs{align-items:center;gap:18px;flex:none;margin:0 0 9px;min-height:26px}
+.order-query-block>.tabs .source{font-size:12px;padding:0 0 7px}
+.order-query-block>.tabs .operational-info-button{margin-left:auto}
+#query{display:flex;align-items:flex-end;flex-wrap:wrap;gap:7px 10px}
+.operational-active #query label{font-size:10px;gap:5px}
+.operational-active #query input,.operational-active #query select,.operational-active #query button{font-size:11px;height:32px;padding:6px 9px}
+.operational-active #query .filter-group{align-items:flex-end;gap:10px;flex-wrap:wrap}
+.operational-active #orders-range{width:220px;max-width:100%}
+.operational-active #status{width:200px}
+.operational-active #query .query-bottom{margin:0 0 0 auto;display:flex}
+.operational-active #rg-fields{width:100%}
+.operational-active #naver-api-picker{max-width:none;flex-basis:100%;margin:0}
+.operational-active #naver-api-picker select{max-width:380px}
+.order-result-controls{min-width:0;display:flex;flex-direction:column;gap:6px}
+.order-result-controls>.section-head{margin:0;min-height:26px;flex-wrap:nowrap}
+.order-result-controls .actions{gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.order-result-controls button,.order-result-controls select,.order-result-controls input{font-size:10px;padding:5px 7px;height:27px}
+.order-result-controls h2{font-size:12px;white-space:nowrap}
+.order-result-controls .order-filters{align-items:center;gap:9px;margin:0;flex-wrap:nowrap}
+.order-result-controls .order-filters>label{flex-direction:row;align-items:center;font-size:9px;gap:5px}
+.order-result-controls #row-search{width:200px}
+.order-result-controls .rg-display-tabs{height:29px;align-self:center;padding:2px}
+.order-result-controls .rg-display-tabs button{font-size:9px;height:24px;padding:3px 7px}
+.order-result-controls .order-totals{min-width:0;display:flex;flex-wrap:nowrap;gap:6px;padding:5px;margin:0;border-radius:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.order-result-controls .order-totals>span{flex:0 0 auto;min-width:112px;gap:3px;padding:2px 5px}
+.order-result-controls .order-totals small{font-size:8px;white-space:nowrap}
+.order-result-controls .order-totals strong{font-size:14px;color:#554766;line-height:1.3}
+.order-result-controls .order-totals em{font-size:8px}
+.operational-active .order-results-panel{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 12px;margin:0;overflow:hidden}
+.operational-active #query-coverage{flex:none;font-size:9px;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active .order-table-scroll{max-height:none;min-height:0;flex:1;width:100%;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.operational-active .order-table-scroll table{min-width:100%;width:max-content;border-collapse:separate;border-spacing:0}
+.operational-active .order-table-scroll th{font-size:11px;padding:7px 9px;background:#f2eff8}
+.operational-active .order-table-scroll td{font-size:11px;padding:6px 9px;line-height:1.5}
+.operational-active .order-table-scroll th .field-name{font-size:9px;line-height:1.3;margin-top:3px}
+.operational-active .order-table-scroll tfoot td{font-size:11px;padding:8px 9px;background:#eeebf8}
+#orders:has(.naver-special-query) .order-result-controls{display:none}
+#orders:has(.naver-special-query)>.orders-topbar{min-height:0;display:block;padding:9px 12px}
+#orders:has(.naver-special-query) .order-query-block>.tabs{margin-bottom:6px}
+#orders:has(.naver-special-query) #naver-api-picker{flex-basis:auto;flex-direction:row;align-items:center}
+.operational-active .naver-case-panel{flex:1;min-height:0;display:flex;flex-direction:column;margin:0;padding:12px;overflow:hidden}
+.operational-active .naver-case-panel>.section-head{flex:none;margin-bottom:8px}
+.operational-active #naver-case-form{flex:none;margin:0}
+.operational-active .naver-case-primary{gap:8px;align-items:center}
+.operational-active .naver-case-primary label{display:flex;flex-direction:row;align-items:center;gap:6px;width:auto;font-size:10px}
+.operational-active .naver-case-panel label input,.operational-active .naver-case-panel label select,.operational-active .naver-case-primary>button{height:31px;font-size:10px;padding:5px 8px}
+.operational-active .naver-case-primary .shared-calendar-field{min-width:230px}
+.operational-active .naver-case-primary .date-range-trigger{height:31px;font-size:10px}
+.operational-active .naver-case-advanced{margin:7px 0 0;padding:6px 9px;max-width:none;max-height:160px;overflow:auto;flex:none}
+.operational-active .naver-case-advanced summary{font-size:10px}
+.operational-active .naver-case-extra{margin-top:8px;gap:8px}
+.operational-active .naver-case-comparison{flex:none;max-height:180px;overflow:auto;margin:6px 0;padding:6px 10px;max-width:none}
+.operational-active .naver-case-comparison summary{font-size:10px}
+.operational-active .naver-case-comparison>.actions{margin:7px 0;gap:8px}
+.operational-active .naver-case-comparison td,.operational-active .naver-case-comparison th{font-size:10px!important;padding:5px 8px!important}
+.operational-active .naver-case-panel #naver-case-status{flex:none;font-size:9px;margin:6px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active .naver-case-panel>details:not(.naver-case-comparison){flex:none;margin:6px 0;font-size:10px;max-height:30vh;overflow:auto}
+.operational-active #naver-case-result{max-height:24vh!important;font-size:10px}
+.operational-active .naver-case-results-head{flex:none;margin:6px 0}
+.operational-active .naver-case-results-head h3{font-size:11px}
+.operational-active .naver-case-tools button{height:27px;font-size:10px;padding:5px 8px}
+/* Generate conditions and reconciliation stay side by side above one result area. */
+.erp-generation-top{flex:0 0 196px;min-height:196px;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(450px,1fr);gap:10px;margin-bottom:8px}
+.operational-active .erp-generation-top>.panel{min-width:0;min-height:0;height:196px;margin:0;padding:10px 12px;overflow:auto;scrollbar-width:thin}
+.operational-active .erp-condition-card>.section-head{flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.operational-active .erp-condition-card>.section-head .actions{gap:5px;align-items:center;flex-wrap:wrap;margin-left:auto}
+.operational-active .erp-condition-card button{font-size:10px;padding:5px 8px;height:28px}
+.operational-active #erp-settings{gap:6px 9px;margin:6px 0 4px;align-items:flex-end}
+.operational-active #erp-settings label{font-size:9px;gap:4px}
+.operational-active #erp-settings>label:has(#erp-source){flex:0 0 170px;min-width:170px}
+.operational-active #erp-settings>.shared-calendar-field{flex:0 0 205px;min-width:205px}
+.operational-active #erp-settings>label:has(#erp-warehouse){flex:0 0 65px;min-width:65px}
+.operational-active #erp-settings>label>input:not([type="checkbox"]),.operational-active #erp-settings>label>select,.operational-active #erp-settings .date-range-trigger,.operational-active #erp-settings>.erp-fixed-manager>strong,.operational-active #erp-settings>#erp-rocket-clear{height:30px;min-height:30px;font-size:10px;padding:5px 7px}
+.operational-active .erp-fixed-manager{font-size:9px;gap:4px}
+.operational-active #erp-settings>.erp-check{min-height:30px;gap:4px;padding:0;flex:none;min-width:0}
+.operational-active #erp-settings>.erp-check input{width:12px;height:12px}
+.operational-active #erp-settings>#erp-rocket-clear{font-size:9px;padding:5px 7px}
+.erp-condition-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.operational-active .erp-condition-status>.hint{flex:1 1 40%;font-size:9px;line-height:1.4;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active .erp-condition-status>.hint:empty{display:none}
+.operational-active #erp-errors{max-height:52px;overflow:auto;font-size:10px}
+.operational-active #erp-errors:empty{display:none}
+.operational-active #erp-errors .erp-error,.operational-active #erp-errors .erp-warning{font-size:9px;padding:4px 7px;margin:3px 0;line-height:1.5}
+.operational-active #erp-load-progress{margin:4px 0;padding:4px 7px;border-radius:5px}
+.operational-active #erp-load-progress>div{font-size:9px}
+.operational-active #erp-load-progress progress{height:4px;margin-top:3px}
+.operational-active #erp-platform-check{width:auto;max-width:none}
+.operational-active #erp-platform-check>.section-head{margin-bottom:5px}
+.operational-active #erp-platform-check .badge{font-size:8px;padding:3px 5px}
+.operational-active #erp-reconciliation .table-wrap{overflow:auto}
+.operational-active #erp-reconciliation table{width:100%;min-width:0;table-layout:auto}
+.operational-active #erp-reconciliation .reconciliation-table th,.operational-active #erp-reconciliation .reconciliation-table td{padding:5px 5px;font-size:10px;line-height:1.4}
+.operational-active #erp-reconciliation .erp-match{font-size:9px;padding:3px 5px;white-space:nowrap}
+.operational-active #erp-reconciliation small{font-size:8px;line-height:1.4}
+.operational-active #erp-market-revenue-status{font-size:8px;line-height:1.4;margin:4px 0}
+.operational-active #erp-market-revenue-status:empty{display:none}
+.operational-active .erp-result-card{flex:1;min-height:0;display:flex;flex-direction:column;padding:10px 12px;margin:0;overflow:hidden}
+.erp-result-tabs{display:flex;gap:6px;align-items:center}
+.erp-result-tabs button{border-radius:4px;font-size:11px;padding:6px 10px;color:#9b8baa;background:transparent;border:1px solid transparent}
+.erp-result-tabs button.active{background:#eee8f7;color:#7d60a0;border-color:#ded0ed}
+.operational-active .erp-result-card>.section-head{flex:none;margin-bottom:6px}
+.operational-active .erp-result-card>.section-head>.muted{font-size:9px}
+.operational-active #erp-preview,.operational-active #erp-audit{flex:1;min-height:0;display:flex;flex-direction:column}
+.operational-active .erp-result-card .erp-table-scroll{flex:1;max-height:none;min-height:0;overflow:auto;margin-top:0;overscroll-behavior:contain;scrollbar-width:thin}
+.operational-active .erp-table-scroll th{font-size:10px;padding:7px 9px;background:#f3eff9}
+.operational-active .erp-table-scroll td{font-size:11px;padding:6px 9px;line-height:1.5}
+.operational-active #erp-preview:empty::after,.operational-active #erp-audit:empty::after{content:'업로드 데이터를 생성하면 이곳에 표시됩니다.';display:grid;place-items:center;flex:1;color:#b3a5c1;font-size:12px;border:1px solid #eee8f5;border-radius:6px}
+/* Full-height inventory and catalog grids. */
+.operational-active #inventory{width:100%;max-width:none;flex:1;min-height:0;margin:0;padding:10px 12px;overflow:hidden}
+.operational-active #inventory[open]{display:flex;flex-direction:column}
+.operational-active #inventory>summary{flex:none;font-size:12px;line-height:1.5;gap:9px}
+.operational-active #inventory>summary .inventory-toggle-hint{font-size:9px}
+.operational-active #inventory-count{font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%}
+.operational-active .inventory-compact-body{flex:1;min-height:0;display:flex;flex-direction:column;margin-top:8px;overflow:hidden}
+.operational-active .inventory-compact-body>.actions{flex:none;gap:6px}
+.operational-active .inventory-compact-body>.actions button{font-size:10px;padding:5px 8px;height:28px}
+.operational-active #inventory-paste{flex:none;height:44px;min-height:44px;max-height:70px;margin-top:7px;font-size:10px;padding:6px 8px}
+.operational-active #inventory-format{flex:none;min-height:0;font-size:9px;line-height:1.3;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #inventory-errors{flex:none;max-height:55px;overflow:auto}
+.operational-active #inventory-search{flex:none;height:29px;padding:5px 8px;font-size:11px;margin:4px 0 7px;max-width:420px}
+.operational-active #inventory-table{flex:1;min-height:0;display:flex;width:100%}
+.operational-active #inventory-table>.table-wrap{flex:1;min-height:0;height:100%;max-height:none;margin:0;width:100%;overflow:auto;scrollbar-width:thin}
+.operational-active #inventory-table table{width:100%;min-width:100%;table-layout:auto}
+.operational-active .catalog-workspace-card{flex:1;min-height:0;padding:10px 12px;display:flex;flex-direction:column;margin:0;overflow:hidden}
+.operational-active .catalog-workspace-card>.section-head{flex:none;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.operational-active .catalog-match-summary{padding:5px 12px;gap:18px;border-width:1px;border-radius:7px}
+.operational-active .catalog-match-summary>span{font-size:13px;gap:8px}
+.operational-active .catalog-summary-needed{padding-left:18px}
+.operational-active .catalog-workspace-tools{flex:none;align-items:center;gap:7px;flex-wrap:wrap}
+.operational-active .catalog-workspace-tools>button{height:29px;font-size:10px;padding:5px 8px}
+.operational-active #code-search{width:200px;height:29px;font-size:11px;padding:5px 8px}
+.operational-active #code-drop{flex:1;display:flex;align-items:center;justify-content:flex-end;min-width:250px;height:31px;padding:3px 7px;margin:0;gap:8px;font-size:9px;border-width:1px;border-radius:5px}
+.operational-active #code-drop>button{font-size:10px;padding:3px 7px}
+.operational-active #code-count{flex:none;font-size:9px;margin:5px 0;line-height:1.3}
+.operational-active #code-table{flex:1;min-height:0;display:flex}
+.operational-active #code-table>.catalog-editor{flex:1;max-height:none;min-height:0;height:100%;overflow:auto;scrollbar-width:thin}
+/* Reconciliation conditions, then compact summaries and a scrolling detail table. */
+.operational-active #revenue{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.operational-active #revenue>.tabs{flex:none;margin:0 0 7px;gap:6px}
+.operational-active #revenue>.tabs button{font-size:11px;padding:6px 10px;border-radius:5px}
+.operational-active #revenue-market-pane:not([hidden]){display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden}
+.operational-active .revenue-query-card{flex:none;padding:9px 12px;margin-bottom:8px;max-height:155px;overflow:auto}
+.operational-active .revenue-query-card>.section-head{margin-bottom:6px}
+.operational-active .revenue-query-card>.erp-form{gap:8px;margin:5px 0;align-items:center}
+.operational-active .revenue-query-card>.erp-form label{flex-direction:row;align-items:center;font-size:10px;gap:6px}
+.operational-active .revenue-query-card>.erp-form select,.operational-active .revenue-query-card>.erp-form input,.operational-active .revenue-query-card>.erp-form button,.operational-active .revenue-query-card>.erp-form .date-range-trigger{height:30px;font-size:10px;padding:5px 8px}
+.operational-active #revenue-status{font-size:9px;line-height:1.4;margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #revenue-only-diff{width:12px;height:12px}
+.operational-active .revenue-query-card>.erp-check{flex-direction:row;align-items:center;font-size:10px;gap:5px}
+.operational-active #revenue-result{flex:1;min-height:0;margin:0;padding:10px 12px;display:flex;flex-direction:column;overflow:hidden}
+.operational-active #revenue-result>.hint{flex:none;font-size:9px;line-height:1.4;margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #revenue-result>.metrics{flex:none;gap:8px;margin:5px 0}
+.operational-active #revenue-result .metric{min-height:0;padding:9px 12px}
+.operational-active #revenue-result .metric>span{font-size:10px}
+.operational-active #revenue-result .metric>strong{font-size:22px;margin:5px 0}
+.operational-active #revenue-result .metric>small{font-size:9px;margin:0}
+.operational-active #revenue-result .revenue-basis{flex:none;font-size:9px;gap:10px;padding:4px 6px;margin:3px 0;line-height:1.4}
+.operational-active #revenue-result>.section-head{flex:none;margin:5px 0}
+.operational-active #revenue-result>.revenue-scroll{flex:1;min-height:0;max-height:none;overflow:auto;scrollbar-width:thin}
+.operational-active #revenue-result>.revenue-scroll td,.operational-active #revenue-result>.revenue-scroll th{font-size:11px;padding:6px 9px}
+.operational-active #revenue-result>details{flex:none;max-height:200px;overflow:auto;font-size:10px;margin-top:6px}
+.operational-active #revenue-naver-pane{flex:1;min-height:0;margin:0;padding:10px 12px;display:flex;flex-direction:column;overflow:hidden}
+.operational-active #revenue-naver-pane>.erp-form{flex:none;align-items:center;gap:8px;margin:5px 0}
+.operational-active #revenue-naver-pane>.erp-form label{flex-direction:row;align-items:center;font-size:10px;gap:7px}
+.operational-active #revenue-naver-pane>.erp-form input,.operational-active #revenue-naver-pane>.erp-form button{height:30px;padding:5px 8px;font-size:10px}
+.operational-active #naver-check-status{flex:none;font-size:9px;margin:4px 0}
+.operational-active #naver-check-summary{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.operational-active #naver-check-summary>.metrics{flex:none;gap:8px;margin:5px 0}
+.operational-active #naver-check-summary .metric{min-height:0;padding:10px 12px}
+.operational-active #naver-check-summary .metric>strong{font-size:23px;margin:5px 0}
+.operational-active #naver-check-summary .metric>span,.operational-active #naver-check-summary .metric>small{font-size:10px}
+.operational-active #naver-check-summary>.table-wrap{flex:none;max-height:200px;overflow:auto}
+.operational-active #naver-check-summary td,.operational-active #naver-check-summary th{font-size:11px;padding:7px 9px}
+.operational-active #naver-check-summary>details{min-height:0;font-size:11px;margin-top:8px;overflow:auto}
+.operational-active #naver-check-summary>details[open]{flex:1;display:flex;flex-direction:column}
+.operational-active #naver-check-summary>details>.table-wrap{min-height:0;overflow:auto;margin-top:6px}
+/* Spreadsheet import keeps its preview and the applied table inside the viewport. */
+.operational-active #rocket-upload{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.operational-active #rocket-upload>.panel{padding:10px 12px;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.operational-active #rocket-upload>.panel:first-child{flex:none;max-height:300px}
+.operational-active #rocket-upload>.panel:last-child{flex:1;margin:0}
+.operational-active #rocket-drop{flex:none;padding:8px 12px;margin:5px 0;gap:10px;font-size:10px;border-width:1px}
+.operational-active #rocket-drop button{font-size:10px;padding:5px 9px}
+.operational-active #rocket-upload .erp-form{flex:none;margin:5px 0;gap:8px;align-items:center}
+.operational-active #rocket-upload .erp-form label{font-size:10px;flex-direction:row;align-items:center}
+.operational-active #rocket-upload .erp-form button,.operational-active #rocket-upload .erp-form select{font-size:10px;padding:5px 8px;height:28px}
+.operational-active #rocket-errors{flex:none;max-height:55px;overflow:auto}
+.operational-active #rocket-preview{min-height:0;max-height:120px;overflow:hidden}
+.operational-active #rocket-preview .erp-table-scroll{max-height:115px;margin:5px 0 0}
+.operational-active #rocket-status{flex:none;font-size:9px;margin:4px 0 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #rocket-current{flex:1;min-height:0;display:flex;flex-direction:column}
+.operational-active #rocket-current .erp-table-scroll{flex:1;min-height:0;max-height:none;margin:0}
+.operational-active .order-table-scroll tbody tr:hover>td,.operational-active .erp-table-scroll tbody tr:hover>td{background:#f3eff8}
+.operational-active .order-table-scroll tbody td:hover,.operational-active .erp-table-scroll tbody td:hover{background:#e4edf5}
+@media(max-width:1399px){.operational-active .orders-topbar{grid-template-columns:minmax(330px,32%) minmax(0,1fr);gap:10px}.order-result-controls .actions{gap:3px}.order-result-controls button{font-size:9px;padding-inline:5px}.operational-active #orders-range{width:180px}.operational-active #status{width:175px}.erp-generation-top{grid-template-columns:minmax(0,1.3fr) minmax(380px,1fr);flex-basis:230px;min-height:230px}.operational-active .erp-generation-top>.panel{height:230px}.operational-active .catalog-workspace-card>.section-head{gap:7px}.operational-active .catalog-match-summary strong{font-size:24px}}
+@media(max-width:1000px){.operational-active>main{height:auto;min-height:100dvh;overflow:visible}.operational-active main>.view:not([hidden]),#erp>[id^="erp-pane-"]:not([hidden]){overflow:visible}.operational-active .orders-topbar{display:flex;flex-direction:column;min-height:0}.operational-active .order-results-panel{min-height:500px}.operational-active .order-table-scroll{max-height:65vh;min-height:300px}.erp-generation-top{display:flex;flex-direction:column;flex:none;min-height:0;height:auto}.operational-active .erp-generation-top>.panel{height:auto;min-height:150px;max-height:none}.operational-active .erp-result-card{height:600px;flex:none}.operational-active #inventory{height:700px;flex:none}.operational-active .catalog-workspace-card{height:750px;flex:none}.operational-active #revenue-result{min-height:500px}.operational-active #revenue-result>.revenue-scroll{max-height:500px}.operational-active #rocket-upload>.panel:last-child{height:500px;flex:none}.operational-active .naver-case-panel{min-height:600px}.operational-active header .header-actions label{display:none}}
+@media(max-width:700px){.operational-active>main{padding:12px}.operational-active header .header-actions{width:auto}.operational-active header .header-actions #connect{display:none}.operational-active #shared-status{white-space:normal}.order-result-controls>.section-head{flex-direction:column;align-items:flex-start}.order-result-controls .order-filters{flex-wrap:wrap}.order-result-controls .order-filters>label{max-width:100%}.operational-active #inventory-count{max-width:100%;white-space:normal}.operational-active .erp-condition-card>.section-head .actions{margin-left:0}.operational-active #erp-settings>.shared-calendar-field{flex-basis:200px}.operational-active #code-drop{justify-content:flex-start;flex-direction:row;flex-wrap:wrap;min-height:36px;height:auto}.operational-active .revenue-query-card{max-height:none}.operational-active .revenue-query-card>.erp-form{flex-wrap:wrap}.operational-active #revenue-result>.metrics,.operational-active #naver-check-summary>.metrics{grid-template-columns:1fr}.operational-active .naver-case-primary{flex-wrap:wrap}.operational-active .naver-case-primary label{flex-direction:column;align-items:flex-start}.operational-active .naver-case-extra{grid-template-columns:1fr 1fr}}
+@media print{.operational-active>main{height:auto;overflow:visible;margin-left:0}.operational-active main>.view:not([hidden]),#erp>[id^="erp-pane-"]:not([hidden]){overflow:visible}.operational-active .erp-result-card,.operational-active .order-results-panel,.operational-active .catalog-workspace-card{height:auto;overflow:visible}.operational-active .erp-result-card .erp-table-scroll,.operational-active .order-table-scroll{max-height:none;overflow:visible}}
+
+.report-view-active main>header{flex:none;min-height:42px;margin-bottom:8px}
+.report-view-active header .eyebrow,.report-view-active header #page-description{display:none}
+.report-view-active header h1{font-size:20px;margin:0}
+.report-view-active header .header-actions label{flex-direction:row;align-items:center}
+.report-view-active #shared-status{font-size:10px;line-height:1.4;margin:0 0 7px}
+:is(#weekly,#monthly) .report-tabs{border-bottom:0;box-shadow:none;padding-bottom:0}
+/* Native details content is an intermediate flex item in Chromium. */
+.operational-active #inventory::details-content{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+@media(min-width:1400px){.erp-generation-top{flex-basis:168px;min-height:168px}.operational-active .erp-generation-top>.panel{height:168px}.operational-active #erp-reconciliation .reconciliation-table th,.operational-active #erp-reconciliation .reconciliation-table td{padding-block:4px;line-height:1.25}.operational-active #erp-reconciliation td:nth-child(5){white-space:nowrap}.operational-active #erp-reconciliation td:nth-child(5) small{display:inline-block;margin-right:4px;font-size:8px}}
+.operational-active .revenue-query-card>.section-head{justify-content:flex-start}
+.operational-active .revenue-query-card>.section-head>h2{margin-right:auto}
+.operational-active #naver-check-summary>details[open]::details-content{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.operational-active #naver-check-summary>details[open]>.table-wrap{flex:1}
