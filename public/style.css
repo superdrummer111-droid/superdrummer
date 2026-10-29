@@ -60,3 +60,5 @@
 .filled-pie-wrap{width:100%;display:grid;place-items:center;padding:0;min-width:0}.filled-pie{display:block;width:100%;max-width:480px;height:auto;overflow:visible;font-family:inherit}.pie-inside-label text{paint-order:stroke}.pie-total{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 18px;padding:11px 8px;background:#f5f7fc;border-radius:8px}.pie-total span{font-size:12px;color:#64748b}.pie-total strong{font-size:25px;color:#24314a;font-variant-numeric:tabular-nums}.revenue-card .chart-label-table{margin-top:6px}
 
 .executive-table{width:max-content;table-layout:auto}.executive-scroll{overflow:visible}.executive-font-control{display:inline-flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;font-size:13px;white-space:nowrap}.executive-font-control input{width:64px;padding:6px}.executive-font-control button{padding:5px 10px}
+
+.api-catalog h3{margin:20px 0 8px;font-size:14px}.api-catalog dl{margin:10px 0}.api-catalog dt{margin-top:14px;color:#34445e;font-size:12px;overflow-wrap:anywhere}.api-catalog dd{margin:5px 0 0;color:#68758a;font-size:12px;line-height:1.5}
