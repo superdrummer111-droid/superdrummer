@@ -1,3 +1,4 @@
+import {threeWayErpChecks} from './erp-checks.js';
 import {joinNaverErpSettlement} from './naver-erp-settlement.js';
 import {readMappings} from './erp-mapping.js';
 import {SEED_CATALOG,SEED_INVENTORY} from './erp-seed.js';
@@ -17,7 +18,8 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi,
  if(!Array.isArray(catalog)||!catalog.length)catalog=SEED_CATALOG;if(!Array.isArray(inventory?.rows))inventory={rows:SEED_INVENTORY,asOf:'',source:'초기 파일 또는 클립보드 가져오기 필요'};
  const settlementSummary=document.createElement('div');settlementSummary.id='erp-naver-settlement-summary';$('erp-reconciliation').after(settlementSummary);
  function invalidate(){settlementSummary.innerHTML='';$('erp-market-revenue-status').textContent='';document.dispatchEvent(new Event('sb-erp-invalidated'));renderReconciliation();result=null;resultKey='';$('erp-download').disabled=true;$('erp-status').textContent='입력 조건이 변경되었습니다. 매칭·LOT 배부를 다시 실행하세요.';}
- function renderReconciliation(checks){$('erp-reconciliation').innerHTML=`<div class="table-wrap"><table class="reconciliation-table"><thead><tr><th>플랫폼</th><th class="numeric">양식 합계액 SUM</th><th class="numeric">원본 데이터 매출 SUM</th><th class="numeric">차이</th><th>검수 상태</th></tr></thead><tbody>${(checks||['마켓플레이스','로켓그로스','네이버'].map(platform=>({platform,status:'미검수'}))).map(row=>`<tr><td>${esc(row.platform)}${row.platform==='네이버'?'<small>결제 정산 금액 기준 (주문 금액 대체)</small>':''}${row.shipping?`<small>주문별 배송비 ${fmt(row.shipping)}원 포함</small>`:''}</td><td class="numeric">${row.total==null?'—':fmt(row.total)}</td><td class="numeric">${row.original==null?'—':fmt(row.original)}</td><td class="numeric">${row.difference==null?'—':fmt(row.difference)}</td><td><span class="erp-match ${row.status==='일치'?'match':row.status==='불일치'?'mismatch':''}">${esc(row.status)}</span></td></tr>`).join('')}</tbody></table></div>`;}
+ function renderReconciliation(checks){const value=n=>n==null?'—':fmt(n);$('erp-reconciliation').innerHTML=`<div class="table-wrap"><table class="reconciliation-table"><thead><tr><th>플랫폼</th><th class="numeric">주문 원본</th><th class="numeric">ERP 양식</th><th class="numeric">구매확정 / 정산</th><th class="numeric">차이 (양식 기준)</th><th>검수 상태</th></tr></thead><tbody>${(checks||['마켓플레이스','로켓그로스','네이버'].map(platform=>({platform,status:'미검수'}))).map(row=>`<tr><td>${esc(row.platform)}${row.shipping?`<small>배송비 ${fmt(row.shipping)}원 포함</small>`:''}</td><td class="numeric">${value(row.original)}</td><td class="numeric">${value(row.total)}</td><td class="numeric">${value(row.reference)}${row.referenceLabel?`<small>${esc(row.referenceLabel)}</small>`:''}</td><td class="numeric"><small>원본 대비 ${value(row.formOriginalDifference??row.difference)}</small><small>기준 대비 ${value(row.formReferenceDifference)}</small></td><td><span class="erp-match ${row.blocking?'mismatch':row.status.includes('원본 차이')?'reference-difference':row.status.includes('일치')?'match':''}">${esc(row.status)}</span>${row.reason?`<small>${esc(row.reason)}</small>`:''}</td></tr>`).join('')}</tbody></table></div>`;}
+
  const report=(id,data)=>{$(id).innerHTML=messages(data.errors,data.warnings||[])};
  function renderCatalog(){const q=$('catalog-search').value.toLowerCase(),entries=catalog.filter(row=>[row.optionId,row.itemCode,row.itemName,row.brand].some(v=>String(v).toLowerCase().includes(q)));$('catalog-count').textContent=`${catalog.length}개 옵션 · 이어케어 95774573584 가중치 ${catalog.find(r=>r.optionId==='95774573584')?.weight??'미등록'}`;$('catalog-table').innerHTML=table(['옵션ID','품번','품명','브랜드','프로젝트코드','프로젝트','본품여부','가중치'],entries.map(r=>[r.optionId,r.itemCode,r.itemName,r.brand,r.projectCode,r.project,r.mainProduct,r.weight]));}
  function renderInventory(){const rows=inventory.rows.filter(r=>r.closing>0),q=$('inventory-search').value.toLowerCase();$('inventory-count').textContent=`${rows.length}개 유효 LOT · 기말재고 ${fmt(rows.reduce((sum,r)=>sum+r.closing,0))}${inventory.updatedAt?' · 최근 저장 '+new Date(inventory.updatedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):''}`;$('inventory-table').innerHTML=table(['창고코드','장소코드','장소','품번','품명','LOT No','기말재고'],rows.filter(r=>[r.itemCode,r.itemName,r.lot,r.location].some(v=>String(v).toLowerCase().includes(q))).map(r=>[r.warehouse,r.location,r.locationName,r.itemCode,r.itemName,r.lot,r.closing]));}
@@ -44,7 +46,7 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi,
  $('erp-source').onchange=()=>{if($('erp-source').value==='excel'&&rocket){$('erp-from').value=rocket.from;$('erp-to').value=rocket.to;}invalidate()};
  $('erp-settings').oninput=invalidate;
  $('erp-generate').onclick=async()=>{
-  $('erp-generate').disabled=true;
+  $('erp-generate').disabled=true;$('erp-download').disabled=true;result=null;resultKey='';
   try{
    if(getCatalogData)catalog=getCatalogData().coupang;
    const options=settings();
@@ -62,12 +64,16 @@ export function initializeErp({getRows,getVendor,getRange,today,notice,fetchApi,
     for(const check of built.reconciliation)if(check.status==='불일치')built.errors.push(check.platform+' 원본 매출과 ERP 양식 합계액이 불일치합니다.');
     built.valid=built.valid&&!built.errors.length;return {source,built};
    };
-   let {source,built}=build();renderReconciliation(built.reconciliation);
+   let marketSnapshot=null,marketError='';
+   let {source,built}=build();renderReconciliation(threeWayErpChecks(built.reconciliation,{naverSettlement:built.naverSettlement,from:options.from,to:options.to,vendor:getVendor(),marketEnabled:options.market,naverEnabled:options.naver}));
    if(options.market&&checkMarketplace){
     $('erp-market-revenue-status').textContent='LOT 배부 완료 · 마켓 매출내역과 구매확정 매출 추가 검수 중…';
-    try{const checked=await checkMarketplace(options);if(checked){const r=checked.result;$('erp-market-revenue-status').textContent=`마켓 매출내역 ${fmt(r.saleTotal)}원 / 구매확정 ${fmt(r.orderTotal)}원 / 차이 ${fmt(r.difference)}원 · ${r.mismatches?'불일치':'일치'} · 상세 내역은 마켓 매출 검수 탭`;}({source,built}=build());}
-    catch(error){$('erp-market-revenue-status').textContent='마켓 매출 추가 검수 실패 · '+error.message;built.warnings.push('마켓 매출내역 추가 검수는 미완료입니다. 원본 주문↔ERP 합계 검수 결과와 별도로 상세 검수 탭에서 확인하세요.');}
+    try{const checked=await checkMarketplace(options);marketSnapshot=checked;if(checked){const r=checked.result;$('erp-market-revenue-status').textContent=`마켓 매출내역 ${fmt(r.saleTotal)}원 / 구매확정 ${fmt(r.orderTotal)}원 / 차이 ${fmt(r.difference)}원 · ${r.mismatches?'불일치':'일치'} · 상세 내역은 마켓 매출 검수 탭`;}({source,built}=build());}
+    catch(error){marketError=error.message;$('erp-market-revenue-status').textContent='마켓 매출 추가 검수 실패 · '+error.message;built.warnings.push('마켓 구매확정 매출 검수가 완료되지 않아 3개 금액을 비교할 수 없습니다.');}
    }
+   built.reconciliation=threeWayErpChecks(built.reconciliation,{naverSettlement:built.naverSettlement,marketSnapshot,marketError,from:options.from,to:options.to,vendor:getVendor(),marketEnabled:options.market,naverEnabled:options.naver});
+   for(const check of built.reconciliation)if(check.blocking)built.errors.push(check.platform+' 3개 금액 검수: '+check.status+(check.reason?' · '+check.reason:''));
+   built.valid=built.valid&&!built.errors.length;
    renderReconciliation(built.reconciliation);result=built;resultKey=signature();document.dispatchEvent(new CustomEvent('sb-erp-generated',{detail:{rows:built.rows,audit:built.audit,settings:options,naverSettlement:built.naverSettlement}}));
    $('erp-errors').innerHTML=messages(built.errors,built.warnings)+(source.excluded.length?`<details><summary>제외 ${source.excluded.length}행 · 구매 미확정/수량 0</summary>${table(['옵션ID','주문번호','제외 사유'],source.excluded.map(r=>[r.optionId,r.orderId,r.reason]))}</details>`:'');
    $('erp-status').textContent=`입력 ${source.selected.length}행 → LOT 배부 ${built.rows.length}행 · 오류 ${built.errors.length}건 · 수량 ${fmt(built.rows.reduce((s,r)=>s+r.SO_QT,0))} · 합계액 ${fmt(built.rows.reduce((s,r)=>s+r.ISUH_AM,0))}원`;

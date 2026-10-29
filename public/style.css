@@ -69,3 +69,5 @@
 .naver-special-query{display:flex;align-items:center;gap:26px;padding:16px 24px}.naver-special-query>.tabs{margin:0;border:0;flex-shrink:0}.naver-special-query #query{flex:1}.naver-special-query #naver-api-picker{margin:0}.naver-special-query .query-bottom{display:none}@media(max-width:700px){.naver-special-query{flex-direction:column;align-items:stretch;gap:12px;padding:16px}}
 
 .rg-display-tabs{display:inline-flex;align-items:center;gap:3px;padding:4px;background:#eef1f7;border-radius:9px}.rg-display-tabs button{padding:9px 14px;background:transparent;color:#6c778d}.rg-display-tabs button.active{background:white;color:#554ad6;box-shadow:0 1px 4px #18264112}#rg-fields .filter-group{margin-bottom:10px}
+
+.erp-match.reference-difference{background:#fff5df;color:#9b6819}#erp-reconciliation .reconciliation-table th,#erp-reconciliation .reconciliation-table td{padding:8px 10px}#erp-reconciliation td:last-child small{max-width:190px;white-space:normal;line-height:1.5}
