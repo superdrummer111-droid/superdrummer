@@ -92,3 +92,28 @@
 .comparison-table thead tr:first-child th{height:36px;box-sizing:border-box;top:0;text-align:center}
 .comparison-table thead tr:nth-child(2) th{top:36px;height:36px;box-sizing:border-box}
 .comparison-table thead th[rowspan]{vertical-align:middle}
+
+.catalog-editor table{table-layout:auto;width:max-content;min-width:100%}
+.catalog-editor [data-catalog-column] input{min-width:100px;width:120px}
+.catalog-editor [data-catalog-column="productId"] input{min-width:96px;width:108px}
+.catalog-editor [data-catalog-column="productName"],.catalog-editor [data-catalog-column="optionName"]{min-width:300px;width:340px;white-space:normal}
+.catalog-editor textarea{display:block;box-sizing:border-box;width:100%;min-width:300px;border:1px solid #e4e8f1;border-radius:6px;padding:8px;background:#fff;font:inherit;line-height:1.45;resize:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+.catalog-editor [data-catalog-column="itemName"] input{min-width:360px;width:440px}
+.catalog-editor td:first-child{white-space:nowrap}
+
+/* Spreadsheet-like catalog editing: the cell itself is the editor. */
+.catalog-editor{border:1px solid #cfd5df;border-top:2px solid #727985;border-radius:0;background:#fff}
+.catalog-editor table{border-collapse:collapse;font-size:12px}
+.catalog-editor thead th{padding:7px 8px;background:#f4f5f7;color:#252c38;border:1px solid #d7dce3;font-size:12px;line-height:1.3}
+.catalog-editor tbody td,.catalog-editor tbody th{padding:0;border:1px solid #d7dce3;height:32px;background:#fff;vertical-align:middle}
+.catalog-editor .catalog-row-number{position:sticky;left:0;min-width:34px;width:34px;text-align:center;color:#687180;background:#f2f3f5;font-weight:400;z-index:1}
+.catalog-editor thead .catalog-row-number{z-index:3}
+.catalog-editor tbody tr:focus-within>td{background:#eef6ff}
+.catalog-editor tbody tr:focus-within>.catalog-row-number{background:#cbd4df;color:#273b53}
+.catalog-editor [data-catalog-column] input,.catalog-editor [data-catalog-column] textarea{display:block;box-sizing:border-box;margin:0;padding:6px 8px;border:1px solid transparent;border-radius:0;box-shadow:none;background:transparent;font:inherit;line-height:1.4;color:#283140;min-height:30px}
+.catalog-editor [data-catalog-column] input[readonly]{color:#687180;background:transparent}
+.catalog-editor [data-catalog-column] input:focus,.catalog-editor [data-catalog-column] textarea:focus{outline:0;border:1px solid #539cf5;background:#cfe6ff;box-shadow:inset 0 0 0 1px #a1c8fa}
+.catalog-editor [data-catalog-column="itemName"] input{min-width:380px;width:460px}
+.catalog-editor .erp-match{display:block;border-radius:0;margin:0;padding:4px 8px;font-size:11px;background:transparent}
+.catalog-editor [data-delete-code]{border:0;border-radius:0;background:transparent;padding:5px 8px;font-size:11px;min-height:30px;white-space:nowrap}
+.catalog-editor tbody .catalog-row-number{top:auto}

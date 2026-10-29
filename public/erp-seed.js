@@ -9,7 +9,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 1,
-    "productId": "8403037986"
+    "productId": "8403037986",
+    "productName": "NEW 뉴트리탑 어덜트 강아지사료 노령견 소프트사료 3kg",
+    "optionName": "닭+쌀, 3kg x 1개"
   },
   {
     "optionId": "94489962503",
@@ -20,7 +22,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 2,
-    "productId": "8403037986"
+    "productId": "8403037986",
+    "productName": "NEW 뉴트리탑 어덜트 강아지사료 노령견 소프트사료 3kg",
+    "optionName": "NEW 뉴트리탑 어덜트 강아지사료 노령견 소프트사료 3kg, 닭+쌀, 2개"
   },
   {
     "optionId": "94489962504",
@@ -31,7 +35,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 3,
-    "productId": "8403037986"
+    "productId": "8403037986",
+    "productName": "NEW 뉴트리탑 어덜트 강아지사료 노령견 소프트사료 3kg",
+    "optionName": "닭+쌀, 3kg x 3개"
   },
   {
     "optionId": "91207431025",
@@ -42,7 +48,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 1,
-    "productId": "8621514027"
+    "productId": "8621514027",
+    "productName": "NEW 뉴트리탑 시니어 강아지사료 노령견 소프트사료 3kg",
+    "optionName": "3kg 1개 닭"
   },
   {
     "optionId": "92181120798",
@@ -53,7 +61,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 1,
-    "productId": "8675325494"
+    "productId": "8675325494",
+    "productName": "NEW 뉴트리탑 면역 강아지사료 전연령 노령견 소프트사료 3kg",
+    "optionName": "3kg 1개 닭"
   },
   {
     "optionId": "92670866062",
@@ -64,7 +74,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814440795"
+    "productId": "8814440795",
+    "productName": "뉴앤힐 올리핏 치킨 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 치킨 전연령 생고기 소프트사료, 1개, 2.4kg, 닭"
   },
   {
     "optionId": "92671279417",
@@ -75,7 +87,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814440795"
+    "productId": "8814440795",
+    "productName": "뉴앤힐 올리핏 오리 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 오리 전연령 생고기 소프트사료, 1개, 2.4kg"
   },
   {
     "optionId": "92671285904",
@@ -86,7 +100,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814440795"
+    "productId": "8814440795",
+    "productName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료, 1개, 2.4kg, 연어+오리"
   },
   {
     "optionId": "92671339499",
@@ -97,7 +113,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814440795"
+    "productId": "8814440795",
+    "productName": "뉴앤힐 올리핏 소고기와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 소고기와 오리 (300gX8ea) 전연령 생고기 소프트사료, 1개, 2.4kg, 소"
   },
   {
     "optionId": "92671436893",
@@ -108,7 +126,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814617199"
+    "productId": "8814617199",
+    "productName": "뉴앤힐 워터프리폼폼 강아지 워터리스 풋샴푸",
+    "optionName": "뉴앤힐 워터프리폼폼 강아지 워터리스 풋샴푸, 1개, 150ml"
   },
   {
     "optionId": "92671521522",
@@ -119,7 +139,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814635394"
+    "productId": "8814635394",
+    "productName": "뉴앤힐 실키앤소프트 반려동물 샴푸 오트밀 추출물 함유",
+    "optionName": "뉴앤힐 실키앤소프트 반려동물 샴푸 오트밀 추출물 함유, 1개, 230ml"
   },
   {
     "optionId": "92671577078",
@@ -130,7 +152,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814645293"
+    "productId": "8814645293",
+    "productName": "뉴앤힐 이어케어 반려동물 저자극 귀세정제",
+    "optionName": "뉴앤힐 이어케어 반려동물 저자극 귀세정제, 1개, 120ml"
   },
   {
     "optionId": "92671817268",
@@ -141,7 +165,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814694020"
+    "productId": "8814694020",
+    "productName": "뉴앤힐 조인트에이드 강아지 관절 영양보조제",
+    "optionName": "1개 뼈/관절강화 60정"
   },
   {
     "optionId": "92671817280",
@@ -152,7 +178,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814694020"
+    "productId": "8814694020",
+    "productName": "뉴앤힐 조인트에이드 강아지 관절 영양보조제",
+    "optionName": "뉴앤힐 조인트에이드 강아지 관절 영양보조제, 1개, 뼈/관절강화, 60정"
   },
   {
     "optionId": "92671862410",
@@ -163,7 +191,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814700998"
+    "productId": "8814700998",
+    "productName": "뉴앤힐 리버웰에이드 강아지 간 영양제",
+    "optionName": "뉴앤힐 리버웰에이드 강아지 간 영양제, 1개, 간+장건강, 60정"
   },
   {
     "optionId": "92671908856",
@@ -174,7 +204,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814708977"
+    "productId": "8814708977",
+    "productName": "뉴앤힐 카디에이드 강아지 심장영양보조제",
+    "optionName": "1개 심장 60정"
   },
   {
     "optionId": "92671908869",
@@ -185,7 +217,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": "8814708977"
+    "productId": "8814708977",
+    "productName": "뉴앤힐 카디에이드 강아지 심장영양보조제",
+    "optionName": "뉴앤힐 카디에이드 강아지 심장영양보조제, 1개, 심장, 60정"
   },
   {
     "optionId": "93099210552",
@@ -196,7 +230,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "본품",
     "weight": 1,
-    "productId": "8933931371"
+    "productId": "8933931371",
+    "productName": "NEW 뉴트리탑 퍼피 강아지사료 소프트사료 3kg",
+    "optionName": "NEW 뉴트리탑 퍼피 강아지사료 소프트사료 3kg"
   },
   {
     "optionId": "95774568296",
@@ -207,7 +243,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 리버웰에이드 강아지 간 영양제",
+    "optionName": "뉴앤힐 리버웰에이드 강아지 간 영양제, 3개, 간+장건강, 60정"
   },
   {
     "optionId": "95774568298",
@@ -218,7 +256,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 리버웰에이드 강아지 간 영양제",
+    "optionName": "뉴앤힐 리버웰에이드 강아지 간 영양제, 2개, 간+장건강, 60정"
   },
   {
     "optionId": "95774568301",
@@ -229,7 +269,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 카디에이드 강아지 심장영양보조제",
+    "optionName": "뉴앤힐 카디에이드 강아지 심장영양보조제, 2개, 심장, 60정"
   },
   {
     "optionId": "95774568302",
@@ -240,7 +282,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 카디에이드 강아지 심장영양보조제",
+    "optionName": "뉴앤힐 카디에이드 강아지 심장영양보조제, 3개, 심장, 60정"
   },
   {
     "optionId": "95774568445",
@@ -251,7 +295,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 조인트에이드 강아지 관절 영양보조제",
+    "optionName": ""
   },
   {
     "optionId": "95774568447",
@@ -262,7 +308,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 조인트에이드 강아지 관절 영양보조제",
+    "optionName": ""
   },
   {
     "optionId": "95774577820",
@@ -273,7 +321,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 실키앤소프트 반려동물 샴푸 오트밀 추출물 함유",
+    "optionName": "뉴앤힐 실키앤소프트 반려동물 샴푸 오트밀 추출물 함유, 2개, 230ml"
   },
   {
     "optionId": "95888293399",
@@ -284,7 +334,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료, 2개, 2.4kg, 연어+오리"
   },
   {
     "optionId": "95881279492",
@@ -295,7 +347,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 치킨 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 치킨 전연령 생고기 소프트사료, 2개, 2.4kg, 닭"
   },
   {
     "optionId": "95774573584",
@@ -306,7 +360,9 @@ export const SEED_CATALOG=[
     "project": "펫의약생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 이어케어 반려동물 저자극 귀세정제",
+    "optionName": "뉴앤힐 이어케어 반려동물 저자극 귀세정제, 3개, 120ml"
   },
   {
     "optionId": "95881279495",
@@ -317,7 +373,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 치킨 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 3개, 2.4kg, 닭"
   },
   {
     "optionId": "95881283666",
@@ -328,7 +386,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 오리 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 2개, 2.4kg, 오리"
   },
   {
     "optionId": "95888274310",
@@ -339,7 +399,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 소고기와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 3개, 2.4kg, 소"
   },
   {
     "optionId": "95888274311",
@@ -350,7 +412,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 2,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 소고기와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 2개, 2.4kg, 소"
   },
   {
     "optionId": "95888293398",
@@ -361,7 +425,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 3,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 3개, 2.4kg, 연어+오리"
   },
   {
     "optionId": "93127763843",
@@ -372,7 +438,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 연어와 오리 (300gX8ea) 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 1개, 2.4kg, 연어+오리"
   },
   {
     "optionId": "93434275115",
@@ -383,7 +451,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": ""
+    "productId": "",
+    "productName": "뉴앤힐 올리핏 오리 전연령 생고기 소프트사료",
+    "optionName": "뉴앤힐 올리핏 강아지 전연령 소프트사료, 1개, 2.4kg, 오리"
   },
   {
     "optionId": "9716438700",
@@ -394,7 +464,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": ""
+    "productId": "",
+    "productName": "NEW 뉴트리탑 면역 강아지사료 전연령 노령견 소프트사료 3kg",
+    "optionName": "NEW 뉴트리탑 면역 강아지사료 전연령 노령견 소프트사료 3kg"
   },
   {
     "optionId": "8403037986",
@@ -405,7 +477,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": ""
+    "productId": "",
+    "productName": "유한양행 어덜트 뉴트리탑 소프트사료",
+    "optionName": "유한양행 어덜트 뉴트리탑 소프트사료"
   },
   {
     "optionId": "7973091039",
@@ -416,7 +490,9 @@ export const SEED_CATALOG=[
     "project": "펫푸드생산부",
     "mainProduct": "",
     "weight": 1,
-    "productId": ""
+    "productId": "",
+    "productName": "NEW 뉴트리탑 시니어 강아지사료 노령견 소프트사료 3kg",
+    "optionName": "NEW 뉴트리탑 시니어 강아지사료 노령견 소프트사료 3kg"
   }
 ];
 export const SEED_INVENTORY=[];
