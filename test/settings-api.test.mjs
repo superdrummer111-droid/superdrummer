@@ -27,3 +27,13 @@ test('일반 조회는 DB의 키로 서버에서 서명하며 다른 판매자�
 test('DB 미설정은 기존 브라우저 모드이며 불완전한 설정은 실패로 닫힌다',async t=>{
  for(const [settings,expected]of [[{enabled:false},200],[{enabled:true},503]]){const server=createServer({settings});await new Promise(r=>server.listen(0,'127.0.0.1',r));try{const r=await fetch('http://127.0.0.1:'+server.address().port+'/api/settings/status');assert.equal(r.status,expected);}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}}
 });
+test('저장 완료 시 버전만 푸시하고 재접속하면 현재 버전을 알린다',async t=>{
+ const {req,origin}=await fixture(t);
+ async function subscribe(){const response=await fetch(origin+'/api/settings/events',{signal:AbortSignal.timeout(5000)});assert.equal(response.status,200);assert.match(response.headers.get('content-type'),/text\/event-stream/);return response.body.getReader();}
+ async function event(reader,name){const decoder=new TextDecoder();let buffer='';for(;;){const {value,done}=await reader.read();assert(!done,'stream closed before event');buffer+=decoder.decode(value,{stream:true});let split;while((split=buffer.indexOf('\n\n'))>=0){const frame=buffer.slice(0,split);buffer=buffer.slice(split+2);if(frame.includes('event: '+name+'\n'))return JSON.parse(frame.split('\n').find(s=>s.startsWith('data: ')).slice(6));}}}
+ const first=await subscribe(),second=await subscribe();assert.deepEqual(await event(first,'settings-ready'),{revision:0});assert.deepEqual(await event(second,'settings-ready'),{revision:0});
+ assert.equal((await req('','PUT',{revision:0,changes:{'sb-erp-catalog-v1':[{optionId:'secret-free-event',itemCode:'P01'}]}})).status,200);
+ assert.deepEqual(await event(first,'settings-changed'),{revision:1});assert.deepEqual(await event(second,'settings-changed'),{revision:1});await first.cancel();await second.cancel();
+ const reconnected=await subscribe();assert.deepEqual(await event(reconnected,'settings-ready'),{revision:1});await reconnected.cancel();
+ assert.equal((await req('/events','GET',null,{Origin:'https://external.example'})).status,403);
+});

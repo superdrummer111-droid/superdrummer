@@ -1,4 +1,4 @@
-import {settingsStorage as localStorage,sharedSettings,initializeSharedSettings,refreshSharedSettings} from './shared-settings.js';
+import {settingsStorage as localStorage,sharedSettings,initializeSharedSettings,refreshSharedSettings,resumeSettingsUpdates} from './shared-settings.js';
 import {initializeOperationalWorkspace} from './workspace-ui.js';
 import {startElapsedTime} from './elapsed-time.js';
 import {displayMoney,dashboardCustomers,petFoodComparisonRows,productPlatformQuantities} from './dashboard-data.js';
@@ -98,6 +98,7 @@ function setBusy(value){
  $('fetch-orders').textContent=value?'조회 중…':'주문 조회 →';$('dashboard-refresh').textContent=value?'조회 중…':'매출 조회';
  if(value){requestSucceeded=false;$('load-progress-bar').value=0;progress(1,'API 조회 준비 중');$('notice').className='success';requestContext={vendor:$('vendor').value.trim(),access:$('access').value.trim(),secret:$('secret').value.trim()};const binding=JSON.stringify(requestContext);if(cacheBinding!==binding){requestCache.clear();cacheBinding=binding}requestFresh=$('query-mode').value==='fresh';queryStats={requests:0,hits:0,start:performance.now()};$('request-status').textContent='조회 중 · 공통 데이터에 없는 기간만 추가로 조회합니다.';}
  else{const failed=!requestSucceeded;if(failed){$('load-progress-label').textContent='조회 중단 · 오류 내역을 확인하세요.';}else{$('load-progress-bar').value=100;$('load-progress-percent').textContent='100%';$('load-progress-label').textContent='조회 및 데이터 저장 완료';}$('request-status').textContent=`API 요청 ${queryStats.requests}회 · 캐시 재사용 ${queryStats.hits}구간 · ${((performance.now()-queryStats.start)/1000).toFixed(1)}초`;requestContext=null;}
+ if(!value)resumeSettingsUpdates();
  if(!value&&overlayRequest){const finalNotice=pendingQueryNotice;overlayRequest=false;pendingQueryNotice=null;$('query-progress-dialog').close();document.body.classList.remove('query-overlay-active');$('load-progress').hidden=true;$('notice').hidden=true;if(finalNotice?.error)notice(finalNotice.message,true);}
 }
 $('query-progress-dialog').addEventListener('cancel',event=>{if(busy)event.preventDefault();});
@@ -341,13 +342,13 @@ document.body.classList.add('dashboard-active');syncRangeLabels();render();rende
 initializeNaverCases({access:naverAccess,request:naverRequest,notice,today,isBusy:()=>busy});
 
 if(sharedSettings.enabled){
- for(const el of document.querySelectorAll('#erp-pane-codes p.hint,#mapping p.hint,#master-count')){if(el.childElementCount===0)el.textContent=el.textContent.replaceAll('수정 즉시 이 브라우저에 저장됩니다.','Enter 또는 다른 행 클릭 시 공유 DB에 설정이 저장되고 메뉴 진입·새로고침 시 사용자 간 공유됩니다.').replaceAll('저장한 규칙은 현재 브라우저에서 적용되며','매핑 저장 버튼으로 공유 DB에 설정이 저장되고 메뉴 진입·새로고침 시 사용자 간 공유되며').replaceAll('이 브라우저에 저장','공유 DB에 설정 저장');}
+ for(const el of document.querySelectorAll('#erp-pane-codes p.hint,#mapping p.hint,#master-count')){if(el.childElementCount===0)el.textContent=el.textContent.replaceAll('수정 즉시 이 브라우저에 저장됩니다.','Enter 또는 다른 행 클릭 시 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영됩니다.').replaceAll('저장한 규칙은 현재 브라우저에서 적용되며','매핑 저장 버튼으로 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영되며').replaceAll('이 브라우저에 저장','공유 DB에 설정 저장');}
 }
 initializeOperationalWorkspace();
 
 let credentialsDirty=false;
 for(const id of ['credentials','naver-credentials']){const form=$(id);form.addEventListener('input',()=>{credentialsDirty=true;});form.addEventListener('submit',()=>{credentialsDirty=false;});}
-sharedSettings.setCanApply(()=>!busy&&!credentialsDirty&&!mappingApp.isDirty()&&!document.activeElement?.closest('#code-table,#mapping,#credentials,#naver-credentials,#master-form')&&!document.querySelector('#catalog-product-picker[open]'));
+sharedSettings.setCanApply(()=>!busy&&!credentialsDirty&&!mappingApp.isDirty()&&!(document.activeElement?.matches('input,textarea,select')&&document.activeElement.closest('#code-table,#mapping,#credentials,#naver-credentials,#master-form'))&&!document.querySelector('#catalog-product-picker[open]'));
 document.addEventListener('sb-shared-settings-changed',event=>{
  if(event.detail?.source==='saved')return;
  credentialsDirty=false;
