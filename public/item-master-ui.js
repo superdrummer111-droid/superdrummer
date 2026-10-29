@@ -1,3 +1,4 @@
+import {settingsStorage as localStorage,sharedSettings} from './shared-settings.js';
 import {itemMaster,setMaster} from './item-master.js';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function initializeItemMaster({getRows,onChange,notice}){

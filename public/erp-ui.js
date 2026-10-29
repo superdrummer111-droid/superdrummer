@@ -1,3 +1,4 @@
+import {settingsStorage as localStorage,sharedSettings} from './shared-settings.js';
 import {startElapsedTime} from './elapsed-time.js';
 import {threeWayErpChecks} from './erp-checks.js';
 import {joinNaverErpSettlement} from './naver-erp-settlement.js';
