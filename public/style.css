@@ -886,3 +886,17 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 .settings-save-badge::before{position:absolute;left:8px;top:7px}
 .settings-save-meta{font-size:9px;font-weight:400;line-height:1.4;color:inherit;opacity:.85;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 #settings-sync-status{z-index:1600}
+/* Improve weekly/monthly table readability without changing the compact layout. */
+:is(#weekly,#monthly) .comparison-workspace{--comparison-body-size:11px;--comparison-product-size:11px;--comparison-heading-size:11px}
+:is(#weekly,#monthly) .comparison-bottom .comparison-scroll th{font-size:9.9px!important}
+:is(#weekly,#monthly) .comparison-bottom .comparison-scroll td,:is(#weekly,#monthly) .comparison-bottom .comparison-scroll td.numeric{font-size:var(--comparison-body-size)!important}
+:is(#weekly,#monthly) .comparison-bottom .comparison-scroll td:first-child strong{font-size:inherit}
+:is(#weekly,#monthly) .comparison-product .comparison-scroll th{font-size:var(--comparison-heading-size)!important}
+:is(#weekly,#monthly) .comparison-product .comparison-scroll td,:is(#weekly,#monthly) .comparison-product .comparison-scroll td.numeric{font-size:var(--comparison-product-size)!important}
+:is(#weekly,#monthly) .comparison-product .comparison-scroll td:first-child strong{font-size:inherit}
+:is(#weekly,#monthly) .comparison-workspace .comparison-scroll td:first-child small{font-size:9.9px}
+:is(#weekly,#monthly) .comparison-right .comparison-metrics>.metric:last-child>strong{font-size:clamp(17px,1.2vw,24px);letter-spacing:-.8px;font-weight:800}
+:is(#weekly,#monthly) .comparison-right .comparison-metrics>.metric:last-child .comparison-change small{font-size:12px}
+@media(min-width:1100px) and (max-width:1750px){:is(#weekly,#monthly) .comparison-workspace{--comparison-body-size:9.9px}}
+@media(max-width:1599px){:is(#weekly,#monthly) .comparison-workspace{--comparison-product-size:9.9px}}
+@media(max-width:700px){:is(#weekly,#monthly) .comparison-workspace{--comparison-body-size:9.9px;--comparison-product-size:9.9px;--comparison-heading-size:9.9px}}
