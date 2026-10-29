@@ -340,6 +340,9 @@ document.body.classList.add('dashboard-active');syncRangeLabels();render();rende
 
 initializeNaverCases({access:naverAccess,request:naverRequest,notice,today,isBusy:()=>busy});
 
+if(sharedSettings.enabled){
+ for(const el of document.querySelectorAll('#erp-pane-codes p.hint,#mapping p.hint,#master-count')){if(el.childElementCount===0)el.textContent=el.textContent.replaceAll('수정 즉시 이 브라우저에 저장됩니다.','Enter 또는 다른 행 클릭 시 공유 DB에 설정이 저장되고 사용자 간 자동 반영됩니다.').replaceAll('저장한 규칙은 현재 브라우저에서 적용되며','매핑 저장 버튼으로 공유 DB에 설정이 저장되고 사용자 간 자동 반영되며').replaceAll('이 브라우저에 저장','공유 DB에 설정 저장');}
+}
 initializeOperationalWorkspace();
 
 let credentialsDirty=false;

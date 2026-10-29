@@ -12,11 +12,11 @@ test('코드표와 ERP 매핑은 공개 공유하며 API 인증 정보만 로그
  assert.equal((await req('/login','POST',{password:'wrong'})).status,401);
  r=await req('/login','POST',{password:'shared-test-password'});assert.equal(r.status,200);assert.match(r.headers.get('set-cookie'),/HttpOnly/);assert.match(r.headers.get('set-cookie'),/SameSite=Strict/);const Cookie=r.headers.get('set-cookie').split(';')[0];
  r=await req('','PUT',{revision:1,changes:{'order-desk-credentials':{vendor:'A01',access:'access',secret:'private'}}},{Cookie});assert.equal(r.status,200);
- const publicState=await(await req()).json();assert.equal(publicState.values['order-desk-credentials'].configured,true);assert(!JSON.stringify(publicState).includes('private'));assert(!JSON.stringify(publicState).includes('access"'));
+ const publicState=await(await req()).json();assert.equal(publicState.updatedByIp,'127.0.0.1');assert(publicState.updatedAt);assert.equal(publicState.values['order-desk-credentials'].configured,true);assert(!JSON.stringify(publicState).includes('private'));assert(!JSON.stringify(publicState).includes('access"'));
  const privateState=await(await req('','GET',null,{Cookie})).json();assert.equal(privateState.values['order-desk-credentials'].secret,'private');
  assert.equal((await req('','PUT',{revision:1,changes:{'sb-erp-catalog-v1':[]}})).status,409);
  assert.equal((await req('','PUT',{revision:2,changes:{'sb-erp-catalog-v1':[]}},{Origin:'https://external.example'})).status,403);
- assert.equal((await db.read()).values['sb-erp-catalog-v1'][0].optionId,'123');
+ assert.equal((await db.read()).values['sb-erp-catalog-v1'][0].optionId,'123');assert.equal((await db.read()).updatedByIp,'127.0.0.1');
 });
 test('일반 조회는 DB의 키로 서버에서 서명하며 다른 판매자는 조회하지 못한다',async t=>{
  const {db,origin,calls}=await fixture(t);await db.update({revision:0,changes:{'order-desk-credentials':{vendor:'A01',access:'server-access',secret:'server-secret'},'sb-naver-credentials-v1':{clientId:'naver-id',clientSecret:'$2a$04$abcdefghijklmnopqrstuu',accountId:''}}});

@@ -1,6 +1,8 @@
+import {isIP} from 'node:net';
 import {createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import {createSettingsDatabase} from './settings-db.mjs';
+export function settingsClientIp(req){const forwarded=process.env.RENDER==='true'?String(req.headers['x-forwarded-for']||'').split(',').at(-1)?.trim():'';const candidate=(forwarded||req.socket.remoteAddress||'').replace(/^::ffff:/,'');return isIP(candidate)?candidate:null;}
 export function createSettingsApi({db,passwordHash=process.env.WORKSPACE_PASSWORD_HASH,encryptionKey=process.env.SETTINGS_ENCRYPTION_KEY,enabled=Boolean(process.env.DATABASE_URL||passwordHash||encryptionKey),now=Date.now}={}){
  enabled=enabled||Boolean(db);let configurationError=false;
  if(enabled){try{if(!/^\$2[aby]\$\d\d\$[./A-Za-z0-9]{53}$/.test(passwordHash||''))throw Error('password hash');db??=createSettingsDatabase({encryptionKey});if(!/^[a-f0-9]{64}$/i.test(encryptionKey||''))throw Error('encryption key');}catch{configurationError=true;}}
@@ -27,7 +29,7 @@ export function createSettingsApi({db,passwordHash=process.env.WORKSPACE_PASSWOR
    }
    if(url.pathname==='/api/settings/logout'&&req.method==='POST'){res.setHeader('Set-Cookie',cookie(req,'',0));send(200,JSON.stringify({ok:true}));return true;}
    if(url.pathname==='/api/settings'&&req.method==='GET'){const state=await db.read();send(200,JSON.stringify(url.searchParams.get('since')===String(state.revision)?{unchanged:true,revision:state.revision,authenticated:authorized(req)}:publicState(state,req)));return true;}
-   if(url.pathname==='/api/settings'&&req.method==='PUT'){const input=await body(req);if(input.changes&&Object.keys(input.changes).some(isCredential)&&!authorized(req)){send(401,JSON.stringify({message:'API 설정을 변경하려면 로그인하세요.'}));return true;}if(!Number.isSafeInteger(input.revision)||input.revision<0||typeof(input.importOnly??false)!=='boolean'){send(400,JSON.stringify({message:'설정 버전을 확인하세요.'}));return true;}let next;try{next=await db.update(input)}catch(error){if(/설정|코드표|공유할 수 없는|API 인증/.test(error.message)){send(400,JSON.stringify({message:error.message}));return true;}throw error;}send(next?200:409,JSON.stringify(next?publicState(next,req):{message:'다른 사용자가 먼저 수정했습니다. 최신 설정을 확인한 뒤 다시 수정하세요.'}));return true;}
+   if(url.pathname==='/api/settings'&&req.method==='PUT'){const input=await body(req);if(input.changes&&Object.keys(input.changes).some(isCredential)&&!authorized(req)){send(401,JSON.stringify({message:'API 설정을 변경하려면 로그인하세요.'}));return true;}if(!Number.isSafeInteger(input.revision)||input.revision<0||typeof(input.importOnly??false)!=='boolean'){send(400,JSON.stringify({message:'설정 버전을 확인하세요.'}));return true;}let next;try{next=await db.update(input,settingsClientIp(req))}catch(error){if(/설정|코드표|공유할 수 없는|API 인증/.test(error.message)){send(400,JSON.stringify({message:error.message}));return true;}throw error;}send(next?200:409,JSON.stringify(next?publicState(next,req):{message:'다른 사용자가 먼저 수정했습니다. 최신 설정을 확인한 뒤 다시 수정하세요.'}));return true;}
    send(404,JSON.stringify({message:'설정 경로를 확인하세요.'}));
   }catch(error){send([400,413].includes(error.status)?error.status:503,JSON.stringify({message:[400,413].includes(error.status)?error.message:'DB 연결 또는 저장에 실패했습니다. 저장되지 않은 변경을 확인하세요.'}));}
   return true;
