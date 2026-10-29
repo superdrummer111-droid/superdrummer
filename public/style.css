@@ -686,3 +686,23 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 .operational-active .revenue-query-card>.section-head>h2{margin-right:auto}
 .operational-active #naver-check-summary>details[open]::details-content{display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden}
 .operational-active #naver-check-summary>details[open]>.table-wrap{flex:1}
+
+/* ERP conditions contain controls only; messages belong to the result area. */
+.operational-active .erp-generation-top>.erp-condition-card{overflow:visible}
+.operational-active .erp-condition-status,.operational-active #erp-pane-generate #erp-load-progress{display:none!important}
+.operational-active #erp-platform-check{overflow:hidden}
+.operational-active #erp-reconciliation .table-wrap{overflow:visible}
+.operational-active #erp-reconciliation table{width:100%;min-width:0;table-layout:fixed}
+.operational-active #erp-reconciliation .reconciliation-table th,.operational-active #erp-reconciliation .reconciliation-table td{font-size:clamp(8px,.55vw,10px);padding:5px 4px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.operational-active #erp-reconciliation .erp-match{display:block;width:100%;font-size:9px;padding:3px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.operational-active #erp-platform-check .badge{display:none}
+.erp-result-status{flex:none;min-height:0}
+.operational-active .erp-result-status>#erp-status{font-size:10px;color:#9a8aa9;line-height:1.4;margin:0 0 5px}
+.operational-active .erp-result-status>#erp-status:empty{display:none}
+.operational-active .erp-result-status>#erp-errors{max-height:110px;overflow:auto;font-size:11px;margin:0 0 6px}
+.operational-active .erp-result-status>#erp-errors:empty{display:none}
+.operational-active .erp-result-status>#erp-errors .erp-error,.operational-active .erp-result-status>#erp-errors .erp-warning{font-size:11px;line-height:1.6;padding:6px 9px;margin:3px 0}
+.operational-active .erp-result-card>.section-head>#erp-elapsed{margin-left:auto;font-size:10px}
+@media(min-width:1400px){.erp-generation-top{flex-basis:156px;min-height:156px}.operational-active .erp-generation-top>.panel{height:156px}}
+.operational-active #erp-reconciliation .reconciliation-table th,.operational-active #erp-reconciliation .reconciliation-table td{padding-block:3px;line-height:1.25}
+.operational-active #erp-reconciliation .erp-match{padding-block:2px;line-height:1.25}
