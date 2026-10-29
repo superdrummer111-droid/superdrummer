@@ -145,3 +145,21 @@
 
 #erp-settings>#erp-rocket-clear{width:auto;flex:0 0 auto;margin-left:auto;white-space:nowrap;padding:10px 12px;font-size:12px;border-color:#e8bac0;color:#b83a49;background:#fff7f8}
 #erp-settings>#erp-rocket-clear:disabled{opacity:.45}
+
+/* ERP condition fields share one height and baseline. */
+#erp-settings{align-items:flex-end}
+#erp-settings>label:not(.calendar-source-field):not(.erp-check){display:flex;flex-direction:column;gap:7px}
+#erp-settings>label>input:not([type="checkbox"]),#erp-settings>label>select,#erp-settings .date-range-trigger,#erp-settings>.erp-fixed-manager>strong,#erp-settings>#erp-rocket-clear{box-sizing:border-box;height:39px;min-height:39px;margin-block:0}
+#erp-settings>.erp-fixed-manager>strong{display:flex;align-items:center}
+#erp-settings>.erp-check{box-sizing:border-box;min-height:39px;padding-bottom:0;margin-bottom:0;align-items:center}
+#erp-source-status{display:block;margin:0 0 10px;font-size:11px}
+#erp-source-status:empty{display:none}
+@media(min-width:1100px){
+ #erp-settings{gap:10px}
+ #erp-settings>label:has(#erp-source){flex:0 1 200px;min-width:180px}
+ #erp-settings>.shared-calendar-field{flex:0 1 210px;min-width:200px}
+ #erp-settings>label:has(#erp-warehouse){flex:0 0 90px;min-width:90px}
+ #erp-settings>.erp-check{flex:0 0 auto;min-width:0;gap:5px}
+ #erp-settings>label>select,#erp-settings>label>input:not([type="checkbox"]){width:100%;min-width:0}
+ #erp-settings>#erp-rocket-clear{padding-inline:10px}
+}
