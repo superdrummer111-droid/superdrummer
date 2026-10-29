@@ -120,3 +120,8 @@
 
 .catalog-editor [data-catalog-column="optionId"]{width:104px;min-width:104px;max-width:104px}
 .catalog-editor td[data-catalog-column="optionId"] input{box-sizing:border-box;width:104px;min-width:104px;max-width:104px;padding-inline:6px}
+
+/* Keep the native item-name picker inside its own table cell. */
+.catalog-editor [data-catalog-column="itemName"]{width:460px;min-width:460px}
+.catalog-editor td[data-catalog-column="itemName"]{position:relative;overflow:hidden}
+.catalog-editor td[data-catalog-column="itemName"] input{box-sizing:border-box;width:100%;min-width:0;max-width:100%}
