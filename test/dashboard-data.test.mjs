@@ -25,3 +25,8 @@ test('제품별 플랫폼 수량은 원주문 수량이 아니라 가중 출고�
  const {productPlatformQuantities}=await import('../public/dashboard-data.js');const product={variants:new Map([['a',{platform:'마켓플레이스',quantity:2,units:6}],['b',{platform:'마켓플레이스',quantity:1,units:2}],['c',{platform:'로켓그로스',quantity:3,units:9}],['d',{platform:'네이버',quantity:4,units:4}]])};
  assert.deepEqual(productPlatformQuantities(product),[{platform:'마켓플레이스',quantity:8},{platform:'로켓그로스',quantity:9},{platform:'네이버',quantity:4}]);
 });
+test('고정 크기 추이는 좁은 컨테이너에서도 SVG 좌표와 표시 픽셀을 동일하게 유지한다',()=>{
+ const html=lineChart({labels:['1','2'],series:[{name:'전체',values:[100,200]}],formatValue:String,title:'추이',fit:true,fitWidth:900,fitHeight:360,preserveSize:true});
+ assert.match(html,/viewBox="0 0 900 360"/);
+ assert.match(html,/width:900px;height:360px;min-width:900px;min-height:360px;max-width:none/);
+});

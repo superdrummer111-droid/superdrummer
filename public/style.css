@@ -706,3 +706,121 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 @media(min-width:1400px){.erp-generation-top{flex-basis:156px;min-height:156px}.operational-active .erp-generation-top>.panel{height:156px}}
 .operational-active #erp-reconciliation .reconciliation-table th,.operational-active #erp-reconciliation .reconciliation-table td{padding-block:3px;line-height:1.25}
 .operational-active #erp-reconciliation .erp-match{padding-block:2px;line-height:1.25}
+
+/* Comparison controls form a single compact header at desktop/zoomed widths. */
+@media(min-width:1100px){
+ .report-view-active>main{position:relative;padding:10px 16px}
+ .report-view-active main>header{position:absolute;top:10px;left:16px;right:16px;height:40px;min-height:40px;margin:0;z-index:2;pointer-events:none}
+ .report-view-active main>header>div{pointer-events:auto}
+ .report-view-active header h1{font-size:18px;white-space:nowrap}
+ .report-view-active header .header-actions{gap:6px;width:auto}
+ .report-view-active header .header-actions label{font-size:9px;gap:5px}
+ .report-view-active header .header-actions select{width:150px;height:30px;font-size:10px;padding:5px 8px}
+ .report-view-active header #connect{height:30px;font-size:10px;padding:5px 9px}
+ .report-view-active #shared-status{display:none}
+ :is(#weekly,#monthly)>.toolbar{position:relative;z-index:3;min-height:40px;height:40px;padding:5px 8px;margin:0 292px 8px 155px;gap:7px;flex-wrap:nowrap;border-radius:7px}
+ :is(#weekly,#monthly)>.toolbar .filter-group{gap:7px;flex-wrap:nowrap}
+ :is(#weekly,#monthly)>.toolbar label{font-size:8px;gap:4px}
+ :is(#weekly,#monthly)>.toolbar button,:is(#weekly,#monthly)>.toolbar select{height:28px;font-size:9px;padding:4px 6px}
+ :is(#weekly,#monthly) .report-tabs{gap:3px}
+ :is(#weekly,#monthly) .report-tabs button{font-size:9px;padding-inline:6px}
+ #weekly-basis{max-width:166px}
+ #weekly-calendar-range{width:130px;min-width:130px}
+ #monthly-calendar-range{width:130px;min-width:130px}
+ :is(#weekly,#monthly) .comparison-periods{gap:5px;justify-content:flex-end;flex-wrap:nowrap;white-space:nowrap}
+ :is(#weekly,#monthly) .report-current-period{padding:5px 7px;gap:4px;font-size:8px}
+ :is(#weekly,#monthly) .report-current-period strong{display:none}
+ :is(#weekly,#monthly) .report-current-period b{font-size:9px}
+ :is(#weekly,#monthly) .report-previous-period{font-size:8px}
+ .comparison-workspace{grid-template-columns:minmax(0,1fr) minmax(420px,29%);gap:9px;min-height:0}
+ .comparison-left{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(340px,1.25fr) minmax(270px,1fr);gap:9px;min-height:0}
+ .comparison-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;min-height:0}
+ .comparison-right{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0}
+ .comparison-right>.comparison-product{flex:1;min-height:0}
+ .comparison-right>.comparison-metrics{flex:none;gap:5px;margin:0}
+ .comparison-right .comparison-metrics>.metric{padding:9px 8px;border-radius:7px}
+ .comparison-right .comparison-metrics .metric>span{font-size:8px;white-space:nowrap}
+ .comparison-right .comparison-metrics .metric>strong{font-size:clamp(14px,1vw,18px);line-height:1.3;margin:5px 0}
+ .comparison-right .comparison-metrics .metric>small{font-size:8px;line-height:1.4;letter-spacing:-.3px}
+ .comparison-right .comparison-metrics .comparison-change{display:block}
+ .comparison-right .comparison-metrics .comparison-change small{display:block;font-size:10px;margin-top:3px}
+ .comparison-trend{min-height:340px}
+ .comparison-trend-chart{min-height:0}
+ .comparison-trend .line-svg{overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
+ .comparison-trend .line-svg svg{flex:none;display:block;max-width:none}
+ .comparison-bottom .comparison-name-col{width:27%}
+ .comparison-bottom .comparison-scroll th{font-size:9px!important;padding-inline:3px}
+ .comparison-bottom .comparison-scroll td,.comparison-bottom .comparison-scroll td.numeric{font-size:10px!important;padding-inline:3px;letter-spacing:-.3px}
+ .comparison-bottom .comparison-scroll td:first-child strong{font-size:10px;font-weight:600}
+}
+@media(min-width:1100px) and (max-width:1750px){
+ :is(#weekly,#monthly) .report-previous-period{display:none}
+ :is(#weekly,#monthly)>.toolbar{margin-left:145px;margin-right:280px;gap:5px}
+ .report-view-active header h1{font-size:17px}
+ .report-view-active header .header-actions select{width:142px}
+ :is(#weekly,#monthly)>.toolbar label{font-size:0;gap:0}
+ :is(#weekly,#monthly)>.toolbar label>button,:is(#weekly,#monthly)>.toolbar label>select{font-size:9px}
+ .comparison-workspace{grid-template-columns:minmax(0,1fr) minmax(400px,29%)}
+ .comparison-bottom .comparison-scroll td,.comparison-bottom .comparison-scroll td.numeric{font-size:9px!important}
+}
+@media(max-width:1099px){
+ .comparison-workspace{display:flex;flex-direction:column;min-height:0}
+ .comparison-left{display:flex;flex-direction:column;min-height:0}
+ .comparison-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .comparison-right{display:flex;flex-direction:column;gap:9px;min-height:0}
+ .comparison-right>.comparison-product{max-height:600px;min-height:300px}
+ .comparison-trend .line-svg{overflow:auto;min-height:360px;scrollbar-width:thin}
+ .comparison-left>.comparison-trend{height:430px!important;flex:none}
+ .comparison-bottom>.comparison-table{min-height:260px}
+}
+@media(max-width:700px){.comparison-bottom{grid-template-columns:1fr}.comparison-right>.comparison-metrics{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:0}.comparison-right .comparison-metrics .metric>strong{font-size:15px}.comparison-right .comparison-metrics .metric>span{font-size:8px}.comparison-right .comparison-metrics .comparison-change small{display:block;font-size:9px}}
+@media print{.report-view-active main>header{display:none}.comparison-right,.comparison-bottom{display:block}.comparison-trend .line-svg{overflow:visible}}
+
+/* Dashboard follows the same dense header and right-hand KPI layout. */
+.dashboard-right{min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px}
+#dashboard .dashboard-right>.dashboard-metrics{flex:none;margin:0;gap:7px}
+#dashboard .dashboard-right>.dashboard-metrics .metric{padding:10px 11px}
+#dashboard .dashboard-right>.dashboard-metrics .metric>span{font-size:9px}
+#dashboard .dashboard-right>.dashboard-metrics .metric>strong{font-size:clamp(17px,1.2vw,23px);margin:5px 0}
+#dashboard .dashboard-right>.dashboard-metrics .metric>small{font-size:8px;line-height:1.4}
+#dashboard .dashboard-right>.dashboard-products{flex:1;min-height:0}
+#dashboard :is(#pie-chart,#category-chart,#brand-chart){overflow:hidden}
+#dashboard .filled-pie-wrap{flex:0 0 clamp(180px,25vh,270px);height:clamp(180px,25vh,270px);min-height:180px;max-height:none}
+#dashboard .filled-pie{height:100%;width:100%;max-height:none}
+#dashboard .pie-total{flex:none}
+#dashboard .chart-label-scroll{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
+#dashboard .chart-label-scroll thead th{position:sticky;top:0;background:#fff;z-index:1}
+#dashboard .chart-label-scroll td{padding-block:5px}
+@media(min-width:1100px){
+ .dashboard-active>main{position:relative;padding:10px 16px}
+ .dashboard-active main>header{position:absolute;top:10px;left:16px;right:16px;height:40px;min-height:40px;margin:0;z-index:2;pointer-events:none}
+ .dashboard-active main>header>div{pointer-events:auto}
+ .dashboard-active header h1{font-size:18px;white-space:nowrap}
+ .dashboard-active header .header-actions,.report-view-active header .header-actions{gap:5px;width:auto}
+ .dashboard-active header .header-actions label,.report-view-active header .header-actions label{font-size:9px;gap:5px}
+ .dashboard-active header .header-actions select,.report-view-active header .header-actions select{width:150px;height:30px;font-size:10px;padding:5px 8px}
+ .dashboard-active #shared-status{display:none}
+ #dashboard .dashboard-toolbar{position:relative;z-index:3;min-height:40px;height:40px;padding:5px 8px;margin:0 196px 8px 155px;gap:8px;flex-wrap:nowrap;border-radius:7px}
+ #dashboard .dashboard-toolbar .filter-group{gap:8px;flex-wrap:nowrap}
+ #dashboard .dashboard-toolbar label{font-size:8px;gap:4px}
+ #dashboard .dashboard-toolbar button,#dashboard .dashboard-toolbar select{height:28px;font-size:9px;padding:4px 6px}
+ #dashboard #dashboard-range{width:205px;height:28px}
+ #dashboard .dashboard-toolbar .actions{gap:5px}
+ #dashboard #dashboard-scope{font-size:8px}
+ :is(#weekly,#monthly)>.toolbar{margin-right:196px}
+ .dashboard-workspace{grid-template-columns:minmax(0,1fr) minmax(420px,29%);gap:9px;min-height:0}
+ .dashboard-left{display:grid;grid-template-rows:minmax(340px,1fr) minmax(330px,1.05fr);gap:9px;min-height:0}
+ #dashboard .trend-panel{min-height:340px}
+ #sales-trend .line-svg{overflow:auto;scrollbar-width:thin;overscroll-behavior:contain}
+ #sales-trend .line-svg svg{flex:none;display:block;max-width:none}
+}
+@media(min-width:1100px) and (max-width:1750px){#dashboard .dashboard-toolbar,:is(#weekly,#monthly)>.toolbar{margin-right:184px;margin-left:145px}.dashboard-active header h1{font-size:17px}.dashboard-active header .header-actions select,.report-view-active header .header-actions select{width:142px}.dashboard-workspace{grid-template-columns:minmax(0,1fr) minmax(400px,29%)}}
+@media(max-width:1099px){.dashboard-workspace{display:flex;flex-direction:column;min-height:0}.dashboard-left{display:flex;flex-direction:column}.dashboard-left .trend-panel{height:430px!important;flex:none}#sales-trend .line-svg{overflow:auto;min-height:360px}#dashboard .revenue-card{min-height:420px;height:420px;flex:none}#dashboard .chart-label-scroll{min-height:60px}#dashboard .dashboard-right>.dashboard-products{min-height:400px;max-height:650px}#dashboard .dashboard-right>.dashboard-metrics .metric>strong{font-size:24px}}
+@media(max-width:700px){#dashboard .filled-pie-wrap{height:210px;flex-basis:210px}#dashboard .revenue-card{height:430px;min-height:430px}#dashboard .dashboard-right>.dashboard-metrics .metric>strong{font-size:20px}}
+@media print{.dashboard-active main>header{display:none}.dashboard-right{display:block}#sales-trend .line-svg{overflow:visible}#dashboard .chart-label-scroll{overflow:visible}}
+/* Reserve readable plot space and enough room for short pie legends. */
+@media(min-width:1100px){
+ .dashboard-left{grid-template-rows:minmax(430px,1fr) minmax(330px,1.05fr)}
+ .comparison-left{grid-template-rows:minmax(430px,1.25fr) minmax(270px,1fr)}
+ #dashboard .filled-pie-wrap{height:clamp(160px,20vh,230px);flex-basis:clamp(160px,20vh,230px);min-height:160px}
+}
