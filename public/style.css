@@ -849,3 +849,17 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 #dashboard .pie-summary-values>span{color:#9485a8;white-space:nowrap}
 @media(min-width:1100px) and (max-width:1750px){#dashboard .pie-summary-layout{gap:6px;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)}#dashboard .pie-summary-item{padding:7px 0}#dashboard .pie-summary-values strong{font-size:10px}}
 @media(max-width:1099px){#dashboard .revenue-card{min-height:280px;height:280px}}
+/* Revenue breakdowns: descending vertical bars with stacked captions. */
+#dashboard .ranked-bars-total{display:flex;justify-content:center;align-items:baseline;gap:8px;flex:none;padding:8px 5px;margin:3px 0 10px;background:#f5f2fa;border:1px solid #eee8f5;border-radius:6px}
+#dashboard .ranked-bars-total span{font-size:10px;color:#8b819c}
+#dashboard .ranked-bars-total strong{font-size:clamp(14px,1vw,19px);letter-spacing:-.5px;color:#27334b}
+#dashboard .ranked-bars-scroll{flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+#dashboard .ranked-bars{height:100%;min-height:0;display:grid;grid-template-columns:repeat(var(--bar-count),minmax(65px,1fr));gap:7px;padding:0 3px;min-width:100%}
+#dashboard .ranked-bar-item{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) 85px}
+#dashboard .ranked-bar-plot{min-height:0;display:flex;align-items:flex-end;justify-content:center;border-bottom:1px solid #e4ddec;background:repeating-linear-gradient(to top,transparent 0,transparent calc(25% - 1px),#f1edf6 calc(25% - 1px),#f1edf6 25%)}
+#dashboard .ranked-bar{width:60%;max-width:56px;border:1px solid color-mix(in srgb,var(--bar-color),#5f477a 15%);border-bottom:0;border-radius:5px 5px 0 0;background:linear-gradient(to top,color-mix(in srgb,var(--bar-color),white 18%),var(--bar-color));transition:height .2s}
+#dashboard .ranked-bar-caption{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;padding:8px 0 0;font-size:10px;line-height:1.35;min-width:0}
+#dashboard .ranked-bar-name{font-weight:600;color:#554a66;min-height:27px;display:flex;align-items:center;justify-content:center;overflow-wrap:anywhere}
+#dashboard .ranked-bar-caption strong{font-size:10px;color:#27334b;white-space:nowrap;letter-spacing:-.5px}
+#dashboard .ranked-bar-share{font-size:10px;color:#9485a8}
+@media(max-width:1099px){#dashboard .revenue-card{min-height:310px;height:310px}}

@@ -1,0 +1,5 @@
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function rankedBars(entries,{total,color,formatAmount}){
+ const ranked=entries.filter(([,value])=>Number.isFinite(value)).sort((a,b)=>b[1]-a[1]),max=Math.max(0,...ranked.map(([,value])=>value));
+ return `<div class="ranked-bars-total"><span>총 합계</span><strong>${esc(formatAmount(total))}</strong></div><div class="ranked-bars-scroll"><div class="ranked-bars" style="--bar-count:${Math.max(1,ranked.length)}" role="list" aria-label="금액 내림차순 판매 실적">${ranked.length?ranked.map(([name,value])=>`<div class="ranked-bar-item" role="listitem"><div class="ranked-bar-plot"><div class="ranked-bar" style="height:${max?Math.max(0,value)/max*100:0}%;--bar-color:${esc(color(name))}" title="${esc(name+' · '+formatAmount(value))}"></div></div><div class="ranked-bar-caption"><span class="ranked-bar-name">${esc(name)}</span><strong>${esc(formatAmount(value))}</strong><span class="ranked-bar-share">${total?(value/total*100).toFixed(1):'0.0'}%</span></div></div>`).join(''):'<div class="empty">조회된 매출이 없습니다.</div>'}</div></div>`;
+}

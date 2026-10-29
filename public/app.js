@@ -4,7 +4,7 @@ import {displayMoney,dashboardCustomers,petFoodComparisonRows,productPlatformQua
 import {rocketOrderPath,rocketOriginalGroups} from './rocket-order-view.js';
 import {fetchSettlementRange} from './naver-case-core.js';
 import {initializeNaverCases} from './naver-case-ui.js';
-import {pieChart} from './pie-chart.js';
+import {rankedBars} from './ranked-bars.js';
 import {downloadRawOrders} from './raw-workbook.js';
 import {initializeNaverCheck} from './naver-check-ui.js';
 import {NAVER_LABELS} from './naver-seed.js';
@@ -179,9 +179,11 @@ if(!productOverrides||typeof productOverrides!=='object'||Array.isArray(productO
 const SERIES_COLORS={channel:{'마켓플레이스':'#edabb9','로켓그로스':'#d88799','네이버':'#a0cdb6'},category:{'사료':'#a18cce','영양제':'#c0adde','세정제':'#d9cdef','미분류':'#ebe5f5'},brand:{'SB뉴트리탑':'#2563eb','올리핏':'#f59e0b','뉴앤힐 보조제':'#e11d48','뉴앤힐 워시':'#059669','뉴앤힐':'#9333ea','뉴트리탑':'#0891b2','기타 / 미분류':'#64748b'}};
 const brandColors=new Map(Object.entries(SERIES_COLORS.brand).map(([name],i)=>[name,['#9580bf','#ae99d1','#c4b3de','#d8ccec','#bba7d7','#e4dcf1','#8c75b5'][i]])),extraBrandColors=['#a996c7','#cdbfe3','#8570ac','#dcd2eb','#b7a5cf'];
 function seriesColor(name,kind){if(kind==='brand'){if(!brandColors.has(name))brandColors.set(name,extraBrandColors[brandColors.size%extraBrandColors.length]);return brandColors.get(name);}return SERIES_COLORS[kind]?.[name]||'#b7a4ce';}
-function renderPie(entries,total,kind){entries=entries.filter(([name,value])=>!(kind==='category'&&name==='미분류'&&value===0)).sort((a,b)=>b[1]-a[1]);
- return `<div class="pie-summary-layout">${pieChart(entries,{total,color:name=>seriesColor(name,kind),formatAmount:value=>amount(value),compact:true})}<div class="pie-summary-list" aria-label="항목별 금액과 점유율">${entries.length?entries.map(([name,value])=>`<div class="pie-summary-item"><div class="pie-summary-name"><i style="background:${seriesColor(name,kind)}"></i><span>${esc(name)}</span></div><div class="pie-summary-values"><strong>${esc(amount(value))}</strong><span>/ ${total?(value/total*100).toFixed(1):'0.0'}%</span></div></div>`).join(''):'<div class="empty">조회된 매출이 없습니다.</div>'}</div></div>`;
+function renderBreakdown(entries,total,kind){
+ entries=entries.filter(([name,value])=>!(kind==='category'&&name==='미분류'&&value===0));
+ return rankedBars(entries,{total,color:name=>seriesColor(name,kind),formatAmount:value=>amount(value)});
 }
+
 function renderTrend(scoped){
  const from=$('dash-from').value,to=$('dash-to').value,mode=$('trend-mode').value;
  try{const options={from,to,mode,covered:(a,b)=>commonComplete(a,b)},points=timeSeries(scoped,options),platformPoints=platform=>timeSeries(scoped.filter(row=>platform==='naver'?row.platform==='네이버':row.platform!=='네이버'),options);
@@ -198,10 +200,10 @@ function renderDashboard(){const cur=$('currency').value,from=$('dash-from').val
  $('dashboard-scope').textContent=`현재 조회 ${rows.length}개 상품 행 중 ${scoped.length}행 집계 · ${cur} · ${from||'시작 제한 없음'} ~ ${to||'종료 제한 없음'} (한국 시간)${unknown?' · 결제일 미확인 '+unknown+'행은 날짜 필터 적용 시 제외':''} · 브라우저의 공통 조회 데이터를 사용합니다.`;$('total-revenue').textContent=amount(a.revenue);const customers=dashboardCustomers(scoped);$('total-orders').innerHTML=fmt(customers.orders)+'<em>건</em>';$('orders-breakdown').textContent=`쿠팡 ${fmt(customers.coupang.orders)}건 · 네이버 ${fmt(customers.naver.orders)}건`;
 
  const channels=['마켓플레이스','로켓그로스','네이버'];
- $('pie-chart').innerHTML=renderPie(channels.map(name=>[name,a.platforms.get(name)||0]),a.revenue,'channel');
- $('category-chart').innerHTML=renderPie([...merch.categories],a.revenue,'category');
+ $('pie-chart').innerHTML=renderBreakdown(channels.map(name=>[name,a.platforms.get(name)||0]),a.revenue,'channel');
+ $('category-chart').innerHTML=renderBreakdown([...merch.categories],a.revenue,'category');
  const brandEntries=[...merch.brands].sort((a,b)=>b[1]-a[1]);
- $('brand-chart').innerHTML=renderPie(brandEntries,a.revenue,'brand');
+ $('brand-chart').innerHTML=renderBreakdown(brandEntries,a.revenue,'brand');
  const productMerch=aggregateMerchandise(scoped.filter(row=>!$('product-platform').value||row.platform===$('product-platform').value),productOverrides);
  const q=$('product-search').value.toLowerCase(),products=productMerch.products.filter(p=>[p.productName,p.brand,...[...p.variants.values()].flatMap(v=>[v.productName,v.vendorItemId])].some(v=>String(v).toLowerCase().includes(q)));
  $('product-count').textContent=products.length;
