@@ -117,3 +117,6 @@
 .catalog-editor .erp-match{display:block;border-radius:0;margin:0;padding:4px 8px;font-size:11px;background:transparent}
 .catalog-editor [data-delete-code]{border:0;border-radius:0;background:transparent;padding:5px 8px;font-size:11px;min-height:30px;white-space:nowrap}
 .catalog-editor tbody .catalog-row-number{top:auto}
+
+.catalog-editor [data-catalog-column="optionId"]{width:104px;min-width:104px;max-width:104px}
+.catalog-editor td[data-catalog-column="optionId"] input{box-sizing:border-box;width:104px;min-width:104px;max-width:104px;padding-inline:6px}
