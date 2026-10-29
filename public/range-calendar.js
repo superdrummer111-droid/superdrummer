@@ -1,24 +1,47 @@
-const iso=date=>`${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
-export function initializeRangeCalendar({dialog,triggers,onApply}){
- let target='',start='',end='',month,phase='start';
- const $=id=>document.getElementById(id);
+const iso=value=>{const date=value instanceof Date?value:new Date(value);return `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;};
+const monthOf=day=>day.slice(0,7),addMonth=(month,offset)=>iso(Date.UTC(Number(month.slice(0,4)),Number(month.slice(5,7))-1+offset,1)).slice(0,7);
+export function selectCalendarDay(state,day){
+ const {start='',end='',fresh=false,pending=false}=state;
+ if(!start||!end)return {start:day,end:day,fresh:false,pending:true};
+ if(day<start)return {start:day,end,fresh:false,pending:false};
+ if(day>end)return {start,end:day,fresh:false,pending:false};
+ if(fresh)return {start:day,end:day,fresh:false,pending:true};
+ if(pending)return {start:day<start?day:start,end:day>start?day:start,fresh:false,pending:false};
+ if(start===end)return {start:day,end:day,fresh:false,pending:false};
+ const distanceStart=Date.parse(day)-Date.parse(start),distanceEnd=Date.parse(end)-Date.parse(day);
+ return distanceStart<=distanceEnd?{start:day,end,fresh:false,pending:false}:{start,end:day,fresh:false,pending:false};
+}
+export const calendarMonths=(start,end,fallback)=>start&&end&&monthOf(start)!==monthOf(end)?[monthOf(start),monthOf(end)]:[monthOf(start||fallback)];
+export function initializeRangeCalendar({dialog,triggers={},onApply=()=>{}}){
+ const $=id=>document.getElementById(id),today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ let state={start:'',end:'',fresh:true,pending:false},views=[monthOf(today())],current=null,target='',activeTrigger=null;
+ const bindings=[],bound=new Set();
+ const configs=[['dashboard','dash-from','dash-to','매출 조회 기간','dashboard-range'],['orders','from','to','주문 조회 기간','orders-range'],['erp','erp-from','erp-to','ERP 조회 기간'],['rocket','rocket-from','rocket-to','파일 집계 기간'],['revenue','revenue-from','revenue-to','매출인식 기간'],['naver-check','naver-check-from','naver-check-to','구매확정 기간'],['naver-case','naver-case-from','naver-case-to','조회 기간'],['revenue-orders','revenue-orders-from',null,'주문 검색 시작일'],['weekly','weekly-anchor',null,'기준 주 날짜'],['monthly','monthly-anchor',null,'기준 월']];
+ const validDay=v=>/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&iso(Date.parse(v))===v;
+ const constraints=()=>{const inputs=current?[current.first,current.last].filter(Boolean):[];return {min:inputs.map(i=>i.min).filter(Boolean).sort().at(-1)||'',max:inputs.map(i=>i.max).filter(Boolean).sort()[0]||''};};
+ const allowed=day=>{const {min,max}=constraints();return (!min||day>=min)&&(!max||day<=max);};
  function display(){
-  $('calendar-jump').value=iso(month).slice(0,7);$('calendar-month').textContent=`${month.getUTCFullYear()}년 ${month.getUTCMonth()+1}월`;
-  $('calendar-selection').textContent=`${start||'시작일 선택'} → ${end||'종료일 선택'}`;
-  $('calendar-instruction').textContent=phase==='end'?'종료일을 선택하세요. 같은 날짜를 다시 누르면 하루를 조회합니다.':'시작일을 선택하세요. 긴 기간은 API 제한에 맞춰 월별로 자동 분할합니다.';
-  $('calendar-apply').disabled=!start||!end;
-  const year=month.getUTCFullYear(),m=month.getUTCMonth(),first=new Date(Date.UTC(year,m,1)).getUTCDay(),last=new Date(Date.UTC(year,m+1,0)).getUTCDate();
-  $('calendar-days').innerHTML='<span></span>'.repeat(first)+Array.from({length:last},(_,i)=>{const day=iso(new Date(Date.UTC(year,m,i+1)));return `<button type="button" data-day="${day}" class="${day===start||day===end?'endpoint ':''}${start&&end&&day>start&&day<end?'within-range':''}" aria-label="${day}" aria-pressed="${day===start||day===end}">${i+1}</button>`}).join('');
-  $('calendar-days').querySelectorAll('[data-day]').forEach(button=>button.onclick=()=>{const day=button.dataset.day;if(phase==='start'){start=day;end='';phase='end'}else{end=day;if(end<start)[start,end]=[end,start];phase='start'}display()});
+  const range=current?.mode==='range';dialog.classList.toggle('calendar-dual',views.length===2);$('calendar-title').textContent=current?.label||'조회 기간 선택';
+  $('calendar-selection').textContent=state.start?(range?`${state.start} → ${state.end}`:current?.mode==='month'?state.start.slice(0,7):state.start):'날짜를 선택하세요.';
+  $('calendar-instruction').textContent=!range?'날짜를 선택하고 적용하세요.':state.pending?'선택일 앞쪽을 누르면 시작일, 뒤쪽을 누르면 종료일이 됩니다.':'범위 밖 날짜는 기간을 늘리고, 안쪽 날짜는 가까운 끝 날짜를 옮겨 줄입니다. 처음 안쪽을 누르면 새 선택을 시작합니다.';
+  $('calendar-apply').disabled=!state.start||!state.end||!allowed(state.start)||!allowed(state.end);$('calendar-apply').textContent=range?'기간 적용':'선택 적용';$('calendar-range-presets').hidden=!range;
+  $('calendar-months').innerHTML=views.map((view,index)=>{
+   const [year,month]=view.split('-').map(Number),first=new Date(Date.UTC(year,month-1,1)).getUTCDay(),last=new Date(Date.UTC(year,month,0)).getUTCDate(),years=Array.from({length:Math.max(new Date().getUTCFullYear()+6,year+2)-Math.min(2010,year-2)},(_,i)=>Math.min(2010,year-2)+i);
+   return `<section class="calendar-pane"><div class="calendar-navigation"><button type="button" class="secondary" data-calendar-nav="${index}" data-offset="-1" aria-label="${index+1}번째 달력 이전 달">‹</button><div class="calendar-month-select"><select data-calendar-year="${index}" aria-label="${index+1}번째 달력 연도">${years.map(y=>`<option${y===year?' selected':''}>${y}</option>`).join('')}</select><select data-calendar-month="${index}" aria-label="${index+1}번째 달력 월">${Array.from({length:12},(_,i)=>`<option value="${i+1}"${i+1===month?' selected':''}>${i+1}월</option>`).join('')}</select></div><button type="button" class="secondary" data-calendar-nav="${index}" data-offset="1" aria-label="${index+1}번째 달력 다음 달">›</button></div><div class="calendar-weekdays">${['일','월','화','수','목','금','토'].map(d=>'<span>'+d+'</span>').join('')}</div><div class="calendar-days">${'<span></span>'.repeat(first)}${Array.from({length:last},(_,i)=>{const day=iso(Date.UTC(year,month-1,i+1)),selected=state.start&&day>=state.start&&day<=state.end;return `<button type="button" data-day="${day}" class="${day===state.start||day===state.end?'endpoint ':''}${selected&&day!==state.start&&day!==state.end?'within-range ':''}${day===today()?'calendar-is-today':''}" aria-label="${day}" aria-pressed="${!!selected}"${allowed(day)?'':' disabled'}>${i+1}</button>`;}).join('')}</div></section>`;
+  }).join('');
  }
- for(const [name,button]of Object.entries(triggers))button.onclick=()=>{
-  target=name;start=$(name==='dashboard'?'dash-from':'from').value;end=$(name==='dashboard'?'dash-to':'to').value;phase='start';month=new Date((start||iso(new Date())).slice(0,7)+'-01T00:00:00Z');display();dialog.showModal();
- };
- $('calendar-prev').onclick=()=>{month.setUTCMonth(month.getUTCMonth()-1);display()};$('calendar-next').onclick=()=>{month.setUTCMonth(month.getUTCMonth()+1);display()};
- $('calendar-jump').onchange=()=>{if(/^\d{4}-\d{2}$/.test($('calendar-jump').value)){month=new Date($('calendar-jump').value+'-01T00:00:00Z');display()}};
- for(const [id,count]of [['calendar-three-months',3],['calendar-six-months',6],['calendar-this-year',0]])$(id).onclick=()=>{const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),date=new Date(today+'T00:00:00Z');start=count?iso(Date.UTC(date.getUTCFullYear(),date.getUTCMonth()-count+1,1)):today.slice(0,4)+'-01-01';end=today;phase='start';month=new Date(start.slice(0,7)+'-01T00:00:00Z');display()};
- $('calendar-apply').onclick=()=>{onApply(target,start,end);dialog.close()};$('calendar-close').onclick=()=>dialog.close();
- $('calendar-today').onclick=()=>{const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());start=end=today;phase='start';month=new Date(today.slice(0,7)+'-01T00:00:00Z');display()};
- $('calendar-month-preset').onclick=()=>{const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());start=today.slice(0,8)+'01';end=today;phase='start';month=new Date(today.slice(0,7)+'-01T00:00:00Z');display()};
- dialog.addEventListener('click',event=>{if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close()}});
+ function setView(index,view){views[index]=view;if(views.length===2){if(index===0&&views[0]>=views[1])views[1]=addMonth(view,1);if(index===1&&views[1]<=views[0])views[0]=addMonth(view,-1);}display();}
+ $('calendar-months').onclick=event=>{const button=event.target.closest('button');if(!button||button.disabled)return;if(button.dataset.calendarNav!==undefined){const index=Number(button.dataset.calendarNav);setView(index,addMonth(views[index],Number(button.dataset.offset)));return;}if(button.dataset.day){const day=button.dataset.day;state=current?.mode==='range'?selectCalendarDay(state,day):{start:day,end:day,fresh:false,pending:false};views=calendarMonths(state.start,state.end,today());display();}};
+ $('calendar-months').onchange=event=>{const year=event.target.dataset.calendarYear,month=event.target.dataset.calendarMonth,index=Number(year??month);if(year!==undefined)setView(index,event.target.value+'-'+views[index].slice(5));if(month!==undefined)setView(index,views[index].slice(0,4)+'-'+String(event.target.value).padStart(2,'0'));};
+ function open(binding){if(binding.button.disabled)return;current=binding;target=binding.name;activeTrigger=binding.button;const first=binding.first.value,last=binding.last?.value||first,start=binding.mode==='month'&&first?first+'-01':first,end=binding.mode==='month'&&last?last+'-01':last;state={start:validDay(start)?start:'',end:validDay(end)?end:'',fresh:true,pending:false};if(state.start&&state.end&&state.start>state.end)[state.start,state.end]=[state.end,state.start];views=calendarMonths(state.start,state.end,today());display();if(!dialog.open)dialog.showModal();}
+ function refresh(){for(const binding of bindings){const first=binding.first.value,last=binding.last?.value,text=binding.mode==='range'?`${first||'시작일'} → ${last||'종료일'} ▾`:`${first||'날짜 선택'} ▾`;if(binding.button.textContent!==text)binding.button.textContent=text;const disabled=binding.first.disabled||!!binding.last?.disabled;if(binding.generated&&binding.button.disabled!==disabled)binding.button.disabled=disabled;}}
+ function scan(){for(const [name,from,to,label,existingId]of configs){if(bound.has(name))continue;const first=$(from),last=to?$(to):null;if(!first||to&&!last)continue;const mode=to?'range':first.type==='month'?'month':'single';let button=existingId?$(existingId):null;if(!button){const wrapper=document.createElement('label');wrapper.className='shared-calendar-field';wrapper.append(document.createTextNode(label));button=document.createElement('button');button.type='button';button.id=name+'-calendar-range';button.className='secondary date-range-trigger';button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','calendar-dialog');wrapper.append(button);const firstLabel=first.closest('label');if(firstLabel?.dataset.caseField)wrapper.dataset.caseField=firstLabel.dataset.caseField;firstLabel?.before(wrapper);for(const input of [first,last].filter(Boolean)){input.closest('label')?.classList.add('calendar-source-field');input.dataset.calendarOriginalType=input.type;input.type='hidden';}}const binding={name,first,last,button,label,mode,generated:!existingId};bindings.push(binding);bound.add(name);button.onclick=()=>open(binding);}refresh();}
+ scan();const observer=new MutationObserver(()=>scan());observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','min','max']});
+ $('calendar-reset').onclick=()=>{state={start:'',end:'',fresh:false,pending:false};views=[views[0]];display();};
+ function preset(start,end){state={start,end,fresh:false,pending:false};views=calendarMonths(start,end,today());display();}
+ for(const [id,count]of [['calendar-three-months',3],['calendar-six-months',6],['calendar-this-year',0]])$(id).onclick=()=>{const value=today(),d=new Date(value+'T00:00:00Z');preset(count?iso(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()-count+1,1)):value.slice(0,4)+'-01-01',value);};
+ $('calendar-today').onclick=()=>preset(today(),today());$('calendar-month-preset').onclick=()=>preset(today().slice(0,8)+'01',today());
+ $('calendar-apply').onclick=()=>{if(!current||!state.start||!state.end||!allowed(state.start)||!allowed(state.end))return;const start=current.mode==='month'?state.start.slice(0,7):state.start;current.first.value=start;if(current.last)current.last.value=state.end;for(const input of [current.first,current.last].filter(Boolean)){input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));}if(target==='dashboard'||target==='orders')onApply(target,state.start,state.end);refresh();dialog.close();activeTrigger?.focus();};
+ $('calendar-close').onclick=()=>dialog.close();dialog.addEventListener('click',event=>{if(event.target===dialog){const rect=dialog.getBoundingClientRect();if(event.clientX<rect.left||event.clientX>rect.right||event.clientY<rect.top||event.clientY>rect.bottom)dialog.close();}});
+ return {refresh:scan,destroy:()=>observer.disconnect()};
 }
