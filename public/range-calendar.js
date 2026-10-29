@@ -5,6 +5,15 @@ export function selectCalendarDay(state,day){
  if(!start||!end)return {start:day,end:day,active:'end',pending:true};
  if(day<start)return {start:day,end,active:'end',pending:false};
  if(day>end)return {start,end:day,active:'start',pending:false};
+ if(start!==end){
+  if(day===start)return {start,end,active:'end',pending:false};
+  if(day===end)return {start,end,active:'start',pending:false};
+  const afterStart=Date.parse(day)-Date.parse(start)===86400000,beforeEnd=Date.parse(end)-Date.parse(day)===86400000;
+  // One-day boundary edits override the previous click's active endpoint.
+  // If the only interior day neighbors both endpoints, the visible basis resolves it.
+  if(afterStart&&!beforeEnd)return {start,end:day,active:'start',pending:false};
+  if(beforeEnd&&!afterStart)return {start:day,end,active:'end',pending:false};
+ }
  return active==='start'?{start:day,end,active:'end',pending:false}:{start,end:day,active:'start',pending:false};
 }
 export function weeklyCalendarPeriods(anchor,basis='calendar'){
@@ -26,7 +35,7 @@ export function initializeRangeCalendar({dialog,triggers={},onApply=()=>{}}){
   document.querySelectorAll('[data-calendar-week-mode]').forEach(button=>{const selected=button.dataset.calendarWeekMode===weekBasis;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected));});
   $('calendar-anchor-start').classList.toggle('active',state.active!=='start');$('calendar-anchor-end').classList.toggle('active',state.active==='start');dialog.classList.toggle('calendar-dual',views.length===2);$('calendar-title').textContent=current?.label||'조회 기간 선택';
   $('calendar-selection').textContent=week?`선택 주 ${week.current.from} → ${week.current.to}\n비교 주 ${week.previous.from} → ${week.previous.to}`:state.start?(range?`${state.start} → ${state.end}`:current?.mode==='month'?state.start.slice(0,7):state.start):'날짜를 선택하세요.';
-  $('calendar-instruction').textContent=weekly?(weekBasis==='calendar'?'비교할 주의 아무 날짜나 클릭하세요. 일요일~토요일을 한 주로 선택합니다.':'보고일을 클릭하세요. 선택한 날을 포함한 직전 7일과 그 이전 7일을 비교합니다.'):monthMode?'비교할 월을 선택하세요.':!range?'날짜를 선택하고 적용하세요.':state.active==='start'?'종료일 기준: 클릭한 날짜가 시작일이 됩니다. 기간 밖을 누르면 범위를 늘립니다.':'시작일 기준: 클릭한 날짜가 종료일이 됩니다. 기간 밖을 누르면 범위를 늘립니다.';
+  $('calendar-instruction').textContent=weekly?(weekBasis==='calendar'?'비교할 주의 아무 날짜나 클릭하세요. 일요일~토요일을 한 주로 선택합니다.':'보고일을 클릭하세요. 선택한 날을 포함한 직전 7일과 그 이전 7일을 비교합니다.'):monthMode?'비교할 월을 선택하세요.':!range?'날짜를 선택하고 적용하세요.':state.active==='start'?'종료일 기준: 클릭한 날짜가 시작일이 됩니다. 끝점 바로 옆 날짜는 해당 경계 규칙을 우선합니다.':'시작일 기준: 클릭한 날짜가 종료일이 됩니다. 끝점 바로 옆 날짜는 해당 경계 규칙을 우선합니다.';
   $('calendar-apply').disabled=!state.start||!state.end||!allowed(state.start)||!allowed(state.end);$('calendar-apply').textContent=range?'기간 적용':monthMode?'월 적용':weekly?'비교 주 적용':'선택 적용';$('calendar-today').textContent=monthMode?'이번 달':'오늘';$('calendar-range-presets').hidden=!range;
   if(monthMode){const year=Number(views[0].slice(0,4));$('calendar-months').innerHTML=`<section class="calendar-pane"><div class="calendar-year-navigation"><button type="button" class="secondary" data-calendar-year-step="-1" aria-label="이전 연도">‹</button><strong>${year}년</strong><button type="button" class="secondary" data-calendar-year-step="1" aria-label="다음 연도">›</button></div><div class="calendar-month-grid">${Array.from({length:12},(_,i)=>{const month=year+'-'+String(i+1).padStart(2,'0');return `<button type="button" data-calendar-pick-month="${month}" aria-pressed="${month===state.start.slice(0,7)}" class="${month===state.start.slice(0,7)?'active ':''}${month>today().slice(0,7)?'calendar-future':''}">${i+1}월</button>`;}).join('')}</div></section>`;return;}
   $('calendar-months').innerHTML=views.map((view,index)=>{
