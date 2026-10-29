@@ -30,3 +30,21 @@ export async function fetchCasePages(api,{action,params,today,onProgress=()=>{}}
  return {responses,records,params};
  }catch(error){error.responses=responses;throw error;}
 }
+export async function fetchSettlementRange(api,{from,to,params,today,onProgress=()=>{}}){
+ if(!date(from)||!date(to)||from>to)throw Error('네이버 정산 시작일·종료일을 확인하세요.');
+ const responses=[],records=[],requests=[],totalDays=Math.round((Date.parse(to)-Date.parse(from))/86400000)+1;
+ const {searchDate:ignored,...base}=params;
+ try{for(let i=0;i<totalDays;i++){
+  const day=new Date(Date.parse(from)+i*86400000).toISOString().slice(0,10);
+  const result=await fetchCasePages(api,{action:'settle-case',params:{...base,searchDate:day,pageNumber:1},today,onProgress:p=>onProgress({...p,date:day,day:i+1,totalDays,count:records.length+p.count})});
+  responses.push(...result.responses);records.push(...result.records);requests.push({searchDate:day,responses:result.responses});
+ }return {responses,records,requests,params:{...base,from,to}};
+ }catch(error){error.responses=[...responses,...(error.responses||[])];throw error;}
+}
+export function compareCaseAmounts(settlement,vat,{field='payAndBenefit',periodType='SETTLE_CASEBYCASE_TAXRETURN_BASIS_DATE',filtered=false}={}){
+ const fields={payAndBenefit:['paySettleAmount','benefitSettleAmount'],paySettleAmount:['paySettleAmount'],settleExpectAmount:['settleExpectAmount']};
+ if(!Object.hasOwn(fields,field))throw Error('비교할 정산 금액을 확인하세요.');
+ const sum=(rows,keys)=>rows.reduce((total,row)=>total+keys.reduce((s,key)=>{const value=row[key];if(value===null||value===undefined||value===''||!['number','string'].includes(typeof value)||!Number.isFinite(Number(value)))throw Error('비교 원본에 '+key+' 금액이 없거나 숫자가 아닙니다. 원본 JSON을 확인하세요.');return s+Number(value);},0),0);
+ const settleAmount=sum(settlement,fields[field]),vatAmount=sum(vat,['totalSalesAmount']),difference=Math.round((settleAmount-vatAmount)*1e6)/1e6;
+ return {settleAmount,vatAmount,difference,status:difference===0?'일치':'불일치',formula:fields[field].map(k=>'SUM('+k+')').join(' + ')+' − SUM(totalSalesAmount)',reference:filtered||periodType!=='SETTLE_CASEBYCASE_TAXRETURN_BASIS_DATE'||field==='settleExpectAmount',settleCount:settlement.length,vatCount:vat.length};
+}
