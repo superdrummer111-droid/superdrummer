@@ -39,7 +39,6 @@ function connectSettingsEvents(){
  eventStream?.close();eventStream=new EventSource('/api/settings/events');
  const receive=event=>{try{const data=JSON.parse(event.data);if(Number.isSafeInteger(data.revision)){pushedRevision=Math.max(pushedRevision,data.revision);resumeSettingsUpdates();}}catch{}};
  eventStream.addEventListener('settings-ready',receive);eventStream.addEventListener('settings-changed',receive);
- eventStream.onerror=()=>{if(!pending.size&&!blocked)status('변경 알림 재연결 중 · 저장 기능은 유지됩니다.');};
 }
 export function refreshSharedSettings(){return refresh();}
 async function refresh(force=false){if(!sharedSettings.enabled||pending.size||sending||refreshing)return;refreshing=true;let fetched=false;try{let state=await request(force?'':'?since='+revision);if(typeof state.authenticated==='boolean'&&state.authenticated!==sharedSettings.authenticated){sharedSettings.authenticated=state.authenticated;state=await request();if(!state.authenticated){for(const key of secretKeys)delete values[key];updateAccess();}}fetched=true;if(state.unchanged){if(saveState.phase==='error'&&!pending.size&&!blocked)status('공유 설정 · DB 연결됨');return;}if(!force&&!canApply()){remote=state;status('다른 사용자의 변경이 있습니다. 편집 후 최신 설정을 적용하세요.');return;}accept(state);}catch(error){status('공유 설정 연결 확인 필요 · '+error.message,true);}finally{refreshing=false;if(fetched)resumeSettingsUpdates();}}

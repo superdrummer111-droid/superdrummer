@@ -900,3 +900,14 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 @media(min-width:1100px) and (max-width:1750px){:is(#weekly,#monthly) .comparison-workspace{--comparison-body-size:9.9px}}
 @media(max-width:1599px){:is(#weekly,#monthly) .comparison-workspace{--comparison-product-size:9.9px}}
 @media(max-width:700px){:is(#weekly,#monthly) .comparison-workspace{--comparison-body-size:9.9px;--comparison-product-size:9.9px;--comparison-heading-size:9.9px}}
+#query-progress-dialog{width:650px}
+#query-popup-platforms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.query-platform-card{min-width:0;padding:12px 10px;border:1px solid #e7dff0;border-radius:9px;background:#faf8fd}
+.query-platform-card>div{display:flex;justify-content:space-between;align-items:center;gap:5px;font-size:11px;color:#66517e}
+.query-platform-card progress{display:block;width:100%;height:7px;margin:12px 0;accent-color:#9b82bf}
+.query-platform-card small{display:block;min-height:30px;font-size:10px;line-height:1.5;color:#92839f;overflow-wrap:anywhere}
+.query-platform-card.inactive{opacity:.48}
+#query-popup-bar{display:none}
+.query-popup-actions{display:flex;justify-content:flex-end;margin-top:15px}
+.query-popup-actions button{font-size:12px;padding:8px 16px}
+@media(max-width:480px){#query-popup-platforms{gap:5px}.query-platform-card{padding:9px 6px}.query-platform-card>div{flex-wrap:wrap;font-size:10px}}
