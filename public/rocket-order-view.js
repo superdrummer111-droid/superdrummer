@@ -14,9 +14,10 @@ export async function fetchRocketDetails(api,{vendor,orders,onProgress=()=>{}}){
  const ids=[...new Set(orders.map(order=>String(order.orderId)))],details=[];
  for(const [index,id]of ids.entries()){
   const result=await api(rocketOrderPath(vendor,id),{});
-  if(!Array.isArray(result.data)||!result.data.length)throw Error('로켓그로스 주문 '+id+'의 상세 응답을 확인하세요.');
-  for(const order of result.data)if(String(order.orderId)!==id||order.vendorId!=null&&String(order.vendorId)!==vendor)throw Error('로켓그로스 상세 응답의 주문번호·판매자 ID가 요청과 다릅니다.');
-  details.push(...result.data);onProgress({completed:index+1,total:ids.length,orderId:id});
+  const batch=Array.isArray(result.data)?result.data:result.data&&typeof result.data==='object'&&result.data.orderId!=null?[result.data]:null;
+  if(!batch?.length)throw Error('로켓그로스 주문 '+id+'의 상세 데이터가 비어 있거나 지원하지 않는 형식입니다.');
+  for(const order of batch)if(String(order.orderId)!==id||order.vendorId!=null&&String(order.vendorId)!==vendor)throw Error('로켓그로스 상세 응답의 주문번호·판매자 ID가 요청과 다릅니다.');
+  details.push(...batch);onProgress({completed:index+1,total:ids.length,orderId:id});
  }
  return {orders:details,orderCount:ids.length};
 }
