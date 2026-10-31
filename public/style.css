@@ -911,3 +911,31 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 .query-popup-actions{display:flex;justify-content:flex-end;margin-top:15px}
 .query-popup-actions button{font-size:12px;padding:8px 16px}
 @media(max-width:480px){#query-popup-platforms{gap:5px}.query-platform-card{padding:9px 6px}.query-platform-card>div{flex-wrap:wrap;font-size:10px}}
+
+/* Keep the order toolbar in normal flow at every browser zoom level. */
+.operational-active .orders-topbar{display:flex;flex-direction:column;gap:10px;min-height:0}
+.order-query-block{width:100%}
+.operational-active #query,.operational-active #query.rocket-query-layout{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 16px}
+.operational-active #query #market-fields{flex:0 1 240px;min-width:0;grid-area:auto}
+.operational-active #orders-range{width:240px;max-width:100%}
+.order-platform-options{display:flex;flex:1 1 300px;min-width:0;flex-wrap:wrap;align-items:flex-end;justify-content:flex-end;gap:8px 12px}
+.operational-active #query #rg-fields{display:block;width:auto;min-width:0}
+.operational-active #query #rg-fields[hidden]{display:none}
+.operational-active #query #rg-fields>.filter-group{display:flex;grid-area:auto;margin:0}
+.operational-active #query #naver-api-picker{flex-basis:auto;min-width:0;max-width:100%}
+.operational-active #query #naver-api-picker select{width:310px;max-width:100%}
+.operational-active #query .query-bottom{flex:0 0 auto;margin:0;grid-area:auto}
+.order-result-controls{gap:8px;width:100%;min-width:0}
+.order-result-controls>.section-head{flex-wrap:wrap;gap:8px}
+.order-result-controls .actions{min-width:0;flex-wrap:wrap}
+.order-result-controls .order-filters{flex-wrap:wrap;min-width:0}
+.order-result-controls .order-filters>label{min-width:0;max-width:100%}
+.order-result-controls #row-search{width:220px;max-width:100%}
+.order-result-controls .order-totals{flex-wrap:wrap;overflow:visible}
+.order-result-controls .order-totals>span{flex:1 1 112px;min-width:0}
+@media(max-width:700px){
+ .order-platform-options{flex-basis:100%;justify-content:flex-start}
+ .operational-active #query .query-bottom{margin-left:auto}
+ .order-result-controls .actions{justify-content:flex-start}
+ .order-result-controls .actions select{max-width:100%}
+}
