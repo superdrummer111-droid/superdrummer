@@ -42,7 +42,7 @@ export function rawOrderSummary(rows){const currencies=new Map(),orders=new Set(
 export function orderSummary(rows){const currencies=new Map(),rawCurrencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total);if(row.platform==='마켓플레이스'){const raw=rawCurrencies.get(row.currency)||{orderAmount:0,discountAmount:0};raw.orderAmount+=row.orderAmount??0;raw.discountAmount+=row.discountAmount??0;rawCurrencies.set(row.currency,raw)}}return {rawCurrencies,rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
 export function rocketListPath(vendorId){if(!/^[A-Za-z0-9_-]+$/.test(vendorId))throw new Error('판매자 ID를 확인하세요.');return `/v2/providers/rg_open_api/apis/api/v1/vendors/${vendorId}/rg/orders`;}
 export function rocketDateRanges(from,to){return splitDateRanges(from,to,30).map(range=>({paidDateFrom:range.from.replaceAll('-',''),paidDateTo:range.to.replaceAll('-','')}));}
-export const ROCKET_TIME_BASIS='utc-to-kst-end-buffer-v2';
+export const ROCKET_TIME_BASIS='utc-to-kst-signed-quantity-v3';
 export function rocketKoreaDateRanges(from,to){
  validateRange(from,to);
  const utcFrom=new Date(Date.parse(from+'T00:00:00+09:00')).toISOString().slice(0,10),utcTo=new Date(Date.parse(to+'T23:59:59.999+09:00')).toISOString().slice(0,10);
@@ -58,7 +58,7 @@ export function rocketPaymentTime(value){
  const stamp=Date.parse(text);if(!Number.isFinite(stamp))throw Error('로켓그로스 UTC 결제일시 형식이 올바르지 않습니다.');return new Date(stamp).toISOString();
 }
 export function filterRocketKoreaOrders(orders,from,to){validateRange(from,to);return orders.filter(order=>{const day=paymentDate(rocketPaymentTime(order.paidAt));return day>=from&&day<=to;});}
-export function refreshRocketTime(row){if(row.platform!=='로켓그로스')return row;let raw;try{raw=JSON.parse(row.raw||'{}')}catch{}const value=raw?.order?.paidAt??row.paidAt;if(value==null||value==='')return row;const paidAt=rocketPaymentTime(value);return {...row,paidAt,queryDate:paymentDate(paidAt),rocketTimeBasis:ROCKET_TIME_BASIS};}
+export function refreshRocketTime(row){if(row.platform!=='로켓그로스')return row;let raw;try{raw=JSON.parse(row.raw||'{}')}catch{}if(raw?.order&&raw?.item){const normalized=normalize([{...raw.order,orderItems:[raw.item]}],'로켓그로스')[0];row={...row,quantity:normalized.quantity,revenue:normalized.revenue,quantitySource:normalized.quantitySource};}const value=raw?.order?.paidAt??row.paidAt;if(value==null||value==='')return row;const paidAt=rocketPaymentTime(value);return {...row,paidAt,queryDate:paymentDate(paidAt),rocketTimeBasis:ROCKET_TIME_BASIS};}
 export function paymentTime(value){if(typeof value==='number'){if(!Number.isFinite(value))throw new Error('결제 타임스탬프가 올바르지 않습니다.');return new Date(value).toISOString();}return String(value??'');}
 export function paymentDate(value){
  if(!value)return '';
@@ -83,7 +83,9 @@ export function normalize(orders,platform){return orders.flatMap(order=>(order.o
  const revenue=rg?(item.salesAmount!=null?money(item.salesAmount):quantity*price):marketplaceRevenue(item,{quantity,price});
  const currency=String(rg?(item.currency||'KRW'):(item.salesPrice?.currencyCode||'KRW')).trim().toUpperCase();
  if(!/^[A-Z]{3}$/.test(currency))throw new Error('API 응답의 통화 코드가 올바르지 않습니다.');
- if(!Number.isFinite(quantity)||!Number.isFinite(price)||quantity<0||price<0||!Number.isFinite(revenue)||revenue<0||rg&&!Number.isInteger(quantity))throw new Error('수량 또는 가격이 잘못된 주문 데이터입니다.');
+ // Rocket cancellation rows may carry signed quantity and amount; do not clamp them to zero.
+ const invalidSignedRocket=rg&&(!Number.isInteger(quantity)||quantity<0&&revenue>0||quantity>0&&revenue<0);
+ if(!Number.isFinite(quantity)||!Number.isFinite(price)||(!rg&&quantity<0)||price<0||!Number.isFinite(revenue)||(!rg&&revenue<0)||invalidSignedRocket)throw new Error('수량 또는 가격이 잘못된 주문 데이터입니다.');
  return {id:JSON.stringify([platform,String(order.orderId),String(order.shipmentBoxId??''),String(item.vendorItemId),String(item.sequenceNo||index)]),platform,orderId:String(order.orderId),shipmentBoxId:String(order.shipmentBoxId??''),vendorItemId:String(item.vendorItemId),productName:rg?item.productName:(item.vendorItemName||item.sellerProductName||'이름 없음'),quantity,price,revenue,...(!rg?{...marketplaceAmounts(item,{quantity,price}),revenueBasis:MARKET_REVENUE_BASIS}:{}),quantitySource,currency,paidAt:rg?(order.paidAt!=null&&order.paidAt!==''?rocketPaymentTime(order.paidAt):''):paymentTime(order.paidAt??order.orderedAt??''),...(rg?{rocketTimeBasis:ROCKET_TIME_BASIS}:{}),status:rg?'주문 조회':statuses[order.status]||order.status||'',sku:item.externalVendorSkuCode??'',cancelCount:Number(item.cancelCount??0),holdCountForCancel:Number(item.holdCountForCancel??0),receiver:order.receiver?.name??'',address:[order.receiver?.addr1,order.receiver?.addr2].filter(Boolean).join(' '),invoiceNumber:order.invoiceNumber??'',raw:JSON.stringify({order:{...order,orderItems:undefined},item})};
 }))}
 export function mergeRows(oldRows,newRows){const map=new Map(oldRows.map(r=>[r.id,r]));newRows.forEach(r=>map.set(r.id,r));return [...map.values()]}
