@@ -943,3 +943,5 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
 .orders-json-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.orders-json-tabs .active{background:#eeeaff;color:#6950cd;border-color:#cfc2ed}
 
 #settings-sync-actions{display:flex;gap:6px}#settings-sync-actions[hidden]{display:none}#settings-sync-actions button{font-size:11px;padding:4px 8px;border:1px solid #d8cee5;background:white;border-radius:5px;color:#695486}
+
+#selected-columns .transfer-option.column-cursor-drag{background:#eeeaff;box-shadow:0 6px 18px #6c5edb38;border:1px solid #a89ae8;border-radius:5px;cursor:grabbing;transition:none;will-change:top,left;opacity:1}.column-origin-placeholder{min-height:0;overflow:hidden}

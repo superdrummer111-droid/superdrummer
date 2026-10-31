@@ -260,14 +260,50 @@ function addColumnKeys(keys){const selected=columns.filter(c=>c.visible),added=c
 function removeColumnKeys(keys){columns.forEach(c=>{if(keys.has(c.key))c.visible=false});rightMarked.clear();saveColumns();renderColumns()}
 const trashIcon='<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function matchingColumns(){const q=$('column-search').value.toLowerCase(),order=sourceColumnOrder[source];return columns.filter(c=>[columnLabel(c.key),columnEnglish(c.key)].some(value=>value.toLowerCase().includes(q))).sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key))}
-let dragFrame=0,dragPointer=0,dragOrigin=null,pointerDrag=null,suppressColumnClick=false;
-function startColumnDrag(event,element){dragKey=element.dataset.key;if(event.dataTransfer){event.dataTransfer.setData('text/plain',dragKey);event.dataTransfer.effectAllowed='move';}const ghost=document.createElement('canvas');ghost.width=ghost.height=1;event.dataTransfer?.setDragImage(ghost,0,0);dragOrigin=element.cloneNode(true);dragOrigin.removeAttribute('data-key');dragOrigin.removeAttribute('draggable');dragOrigin.className='transfer-option column-origin-placeholder';dragOrigin.setAttribute('aria-hidden','true');dragOrigin.querySelectorAll('input,button').forEach(el=>el.disabled=true);element.after(dragOrigin);const tick=()=>{if(!dragKey)return;const box=$('selected-columns'),rect=box.getBoundingClientRect(),speed=dragPointer>rect.bottom-36?9:dragPointer<rect.top+36?-9:0;if(speed)box.scrollTop+=speed;dragFrame=requestAnimationFrame(tick)};dragPointer=event.clientY;dragFrame=requestAnimationFrame(tick);}
-function finishColumnDrag(){if(!dragKey)return;cancelAnimationFrame(dragFrame);dragOrigin?.remove();dragOrigin=null;const box=$('selected-columns'),keys=[...box.querySelectorAll('[data-key]')].map(el=>el.dataset.key),moving=new Set(keys),ordered=keys.map(key=>columns.find(c=>c.key===key));columns=columns.map(c=>moving.has(c.key)?ordered.shift():c);dragKey='';saveColumns();renderColumns();}
-$('selected-columns').ondragover=event=>{event.preventDefault();if(!dragKey)return;dragPointer=event.clientY;const box=$('selected-columns'),dragged=[...box.children].find(el=>el.dataset.key===dragKey),target=event.target.closest('.transfer-option');if(!dragged||!target||target===dragged||target===dragOrigin||target.parentElement!==box)return;const rect=target.getBoundingClientRect();box.insertBefore(dragged,event.clientY>rect.top+rect.height/2?target.nextSibling:target);};
-$('selected-columns').ondrop=event=>{event.preventDefault();finishColumnDrag()};
-document.addEventListener('pointermove',event=>{if(!pointerDrag)return;if(!dragKey&&Math.hypot(event.clientX-pointerDrag.x,event.clientY-pointerDrag.y)>5){suppressColumnClick=true;startColumnDrag(event,pointerDrag.element)}if(!dragKey)return;event.preventDefault();dragPointer=event.clientY;const box=$('selected-columns'),target=document.elementFromPoint(event.clientX,event.clientY)?.closest('.transfer-option');if(target&&target!==pointerDrag.element&&target!==dragOrigin&&target.parentElement===box){const rect=target.getBoundingClientRect();box.insertBefore(pointerDrag.element,event.clientY>rect.top+rect.height/2?target.nextSibling:target)}});
-function endPointerDrag(){if(!pointerDrag)return;const {element,id}=pointerDrag;if(element.hasPointerCapture(id))element.releasePointerCapture(id);pointerDrag=null;finishColumnDrag();setTimeout(()=>suppressColumnClick=false,0)}
+let dragFrame=0,dragOrigin=null,pointerDrag=null,suppressColumnClick=false;
+function moveColumnDrag(direction=0){
+ if(!dragKey||!pointerDrag)return;
+ const {element,x,y,offsetX,offsetY}=pointerDrag;
+ element.style.left=(x-offsetX)+'px';element.style.top=(y-offsetY)+'px';
+ const box=$('selected-columns'),bounds=box.getBoundingClientRect();
+ if(!direction||x<bounds.left||x>bounds.right)return;
+ const floating=element.getBoundingClientRect();
+ // Swap at the moving row's leading edge, rather than waiting for the next row's midpoint.
+ for(let count=0;count<box.children.length;count++){
+  let neighbor=direction>0?dragOrigin.nextElementSibling:dragOrigin.previousElementSibling;
+  if(neighbor===element)neighbor=direction>0?neighbor.nextElementSibling:neighbor.previousElementSibling;
+  if(!neighbor||!neighbor.dataset.key)break;
+  const rect=neighbor.getBoundingClientRect();
+  if(direction>0?floating.bottom<=rect.top+1:floating.top>=rect.bottom-1)break;
+  box.insertBefore(dragOrigin,direction>0?neighbor.nextSibling:neighbor);
+ }
+}
+function startColumnDrag(event,element){
+ dragKey=element.dataset.key;const rect=element.getBoundingClientRect();
+ dragOrigin=element.cloneNode(true);dragOrigin.removeAttribute('data-key');dragOrigin.removeAttribute('draggable');dragOrigin.className='transfer-option column-origin-placeholder';dragOrigin.setAttribute('aria-hidden','true');dragOrigin.style.height=rect.height+'px';dragOrigin.querySelectorAll('input,button').forEach(el=>el.disabled=true);element.after(dragOrigin);
+ pointerDrag.savedStyle=element.getAttribute('style');element.classList.add('column-cursor-drag');Object.assign(element.style,{position:'fixed',width:rect.width+'px',height:rect.height+'px',margin:'0',zIndex:'10',pointerEvents:'none'});
+ moveColumnDrag(Math.sign(event.clientY-pointerDrag.startY));
+ const tick=()=>{if(!dragKey||!pointerDrag)return;const box=$('selected-columns'),bounds=box.getBoundingClientRect(),inside=pointerDrag.x>=bounds.left&&pointerDrag.x<=bounds.right,speed=inside?(pointerDrag.y>bounds.bottom-36?9:pointerDrag.y<bounds.top+36?-9:0):0;if(speed){box.scrollTop+=speed;moveColumnDrag(Math.sign(speed));}dragFrame=requestAnimationFrame(tick);};dragFrame=requestAnimationFrame(tick);
+}
+function finishColumnDrag(commit=true){
+ if(!dragKey||!pointerDrag)return;cancelAnimationFrame(dragFrame);
+ const {element,savedStyle}=pointerDrag,box=$('selected-columns');if(commit&&dragOrigin)box.insertBefore(element,dragOrigin);dragOrigin?.remove();dragOrigin=null;element.classList.remove('column-cursor-drag');if(savedStyle===null)element.removeAttribute('style');else element.setAttribute('style',savedStyle);
+ const keys=[...box.querySelectorAll('[data-key]')].map(el=>el.dataset.key),moving=new Set(keys),ordered=keys.map(key=>columns.find(c=>c.key===key));columns=columns.map(c=>moving.has(c.key)?ordered.shift():c);dragKey='';if(commit)saveColumns();renderColumns();
+}
+document.addEventListener('pointermove',event=>{
+ if(!pointerDrag||event.pointerId!==pointerDrag.id)return;
+ const previousY=pointerDrag.y;pointerDrag.x=event.clientX;pointerDrag.y=event.clientY;
+ if(!dragKey&&Math.hypot(event.clientX-pointerDrag.startX,event.clientY-pointerDrag.startY)>3){suppressColumnClick=true;startColumnDrag(event,pointerDrag.element);}
+ if(!dragKey)return;event.preventDefault();moveColumnDrag(Math.sign(event.clientY-previousY));
+},{passive:false});
+function endPointerDrag(event){
+ if(!pointerDrag||event?.pointerId!==undefined&&event.pointerId!==pointerDrag.id)return;
+ const {element,id}=pointerDrag;if(element.hasPointerCapture(id))element.releasePointerCapture(id);finishColumnDrag(event?.type!=='pointercancel'&&event?.type!=='close'&&event?.type!=='cancel');pointerDrag=null;setTimeout(()=>suppressColumnClick=false,0);
+}
 document.addEventListener('pointerup',endPointerDrag);document.addEventListener('pointercancel',endPointerDrag);
+$('columns-dialog').addEventListener('close',endPointerDrag);
+$('columns-dialog').addEventListener('cancel',endPointerDrag);
+
 function renderColumns(){
  const sample=visibleRows()[0]||rows.find(r=>r.platform===(channelName(source))),matches=matchingColumns();
  function option(column,right){const marked=(right?rightMarked:leftMarked).has(column.key),selected=columns.filter(c=>c.visible),index=selected.findIndex(c=>c.key===column.key),example=sample?rawOrderFields(sample)[column.key]??'null / 값 없음':'조회 후 예시 표시';
@@ -280,7 +316,7 @@ function renderColumns(){
   const toggle=()=>{const key=el.dataset.key;if(!right&&columns.find(c=>c.key===key).visible)return;const marked=right?rightMarked:leftMarked;marked.has(key)?marked.delete(key):marked.add(key);renderColumns()};
   el.onclick=event=>{if(suppressColumnClick){suppressColumnClick=false;return}if(!event.target.closest('button')&&!event.target.closest('input'))toggle()};el.querySelector('.column-check').onchange=toggle;
   el.querySelector('.column-action').onclick=()=>right?removeColumnKeys(new Set([el.dataset.key])):addColumnKeys(new Set([el.dataset.key]));
-  if(right){el.draggable=false;el.onpointerdown=event=>{if(event.button!==0||event.target.closest('button,input'))return;pointerDrag={element:el,x:event.clientX,y:event.clientY,id:event.pointerId};el.setPointerCapture(event.pointerId);event.preventDefault()};el.querySelectorAll('[data-step]').forEach(button=>button.onclick=()=>reorderSelected(el.dataset.key,+button.dataset.step));el.ondragstart=event=>startColumnDrag(event,el);el.ondragend=finishColumnDrag;}
+  if(right){el.draggable=false;el.onpointerdown=event=>{if(event.button!==0||event.target.closest('button,input'))return;const rect=el.getBoundingClientRect();pointerDrag={element:el,x:event.clientX,y:event.clientY,startX:event.clientX,startY:event.clientY,offsetX:event.clientX-rect.left,offsetY:event.clientY-rect.top,id:event.pointerId};el.setPointerCapture(event.pointerId);event.preventDefault()};el.querySelectorAll('[data-step]').forEach(button=>button.onclick=()=>reorderSelected(el.dataset.key,+button.dataset.step));el.ondragstart=event=>event.preventDefault();}
  });
  $('all-columns').scrollTop=scrolls[0];$('selected-columns').scrollTop=scrolls[1];
  $('columns-add').disabled=!leftMarked.size;$('columns-remove').disabled=!rightMarked.size;
