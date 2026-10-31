@@ -18,5 +18,5 @@ export async function handleNaver(input,request=fetch,{signal}={}){
   url=HOST+(input.action==='vat-case'?'/v1/pay-settle/vat/case':'/v1/pay-settle/settle/case')+'?'+query;
   options={method:'GET',headers:{Accept:'application/json',Authorization:'Bearer '+input.accessToken}};
  }else throw Error('허용되지 않은 네이버 API 요청');
- const response=await request(url,{...options,signal:signal?AbortSignal.any([AbortSignal.timeout(90000),signal]):AbortSignal.timeout(90000),redirect:'error'}),body=await response.text();try{JSON.parse(body)}catch{throw Error('네이버가 JSON이 아닌 응답을 반환했습니다.');}return {status:response.status,body,retryAfter:response.headers?.get?.('retry-after')||null};
+ const response=await request(url,{...options,signal:signal?AbortSignal.any([AbortSignal.timeout(90000),signal]):AbortSignal.timeout(90000),redirect:'error'}),body=await response.text();try{JSON.parse(body)}catch{throw Error('네이버가 JSON이 아닌 응답을 반환했습니다.');}return {status:response.status,body,url:String(url),method:options.method,retryAfter:response.headers?.get?.('retry-after')||null};
 }

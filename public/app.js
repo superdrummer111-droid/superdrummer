@@ -1,3 +1,5 @@
+import {configureApiTrace,startApiTrace,tracedApiFetch,apiTraceReport} from './api-trace.js';
+import {initializeDialogDismiss} from './dialog-dismiss.js';
 import {initializeOrdersJson} from './orders-json.js';
 import {startQuerySession,finishQuerySession,cancelQuerySession,querySignal,queryWait,assertQueryActive} from './query-session.js';
 import {settingsStorage as localStorage,sharedSettings,initializeSharedSettings,refreshSharedSettings,resumeSettingsUpdates} from './shared-settings.js';
@@ -98,13 +100,13 @@ let lastMarketRequest=0;
 async function api(path,params){return withRetry(async()=>{
  const rocket=path.includes('/rg/'),last=rocket?lastRocketRequest:lastMarketRequest,interval=rocket?1250:250,wait=Math.max(0,interval-(Date.now()-last));if(wait)await queryWait(wait);if(rocket)lastRocketRequest=Date.now();else lastMarketRequest=Date.now();
  const query=new URLSearchParams(params).toString(),auth=sharedSettings.enabled?undefined:await authorization(requestContext?.access??$('access').value.trim(),requestContext?.secret??$('secret').value.trim(),path,query);queryStats.requests++;
- let response;try{response=await fetch('/api/coupang',{method:'POST',headers:{'Content-Type':'application/json'},signal:querySignal(),body:JSON.stringify({path,query,authorization:auth})})}catch(error){error.retryable=error.name!=='AbortError';throw error}
+ let response;try{response=await tracedApiFetch('/api/coupang',{method:'POST',headers:{'Content-Type':'application/json'},signal:querySignal(),body:JSON.stringify({path,query,authorization:auth})},{platform:rocket?'로켓그로스':'마켓플레이스',url:'https://api-gateway.coupang.com'+path+(query?'?'+query:''),path,params:Object.fromEntries(new URLSearchParams(query))})}catch(error){error.retryable=error.name!=='AbortError';throw error}
  const text=await response.text();let data;try{data=parseApiJson(text)}catch{const error=Error('API 응답을 해석하지 못했습니다. HTTP '+response.status);error.retryable=[429,502,503,504].includes(response.status);throw error;}
  if(!response.ok||data.code!==undefined&&!['200','SUCCESS','0'].includes(String(data.code))){const error=Error(`API ${response.status}: ${data.message||'인증과 요청 조건을 확인하세요.'}`);error.retryable=[429,502,503,504].includes(response.status);const retry=response.headers.get('retry-after');error.retryAfter=retry?(Number(retry)*1000||Math.max(0,Date.parse(retry)-Date.now())):0;throw error}return data;
  },{onRetry:(error,attempt,delay)=>notice(`일시적인 API 오류 · ${attempt}차 자동 재시도 대기 (${(delay/1000).toFixed(1)}초): ${error.message}`)});}
 function credentialsReady(options=null){const explicit=options&&['market','rocket','naver'].some(k=>options[k]);if(explicit){if((options.market||options.rocket)&&!coupangConfigured()||options.naver&&!naverConfigured()){notice('조회할 채널의 API 인증 정보를 입력하세요.',true);view('settings');return false;}}else if(!coupangConfigured()&&!naverConfigured()){notice('쿠팡 또는 네이버 API 인증 정보를 입력하세요.',true);view('settings');return false;}if(coupangConfigured()&&!crypto.subtle){notice('HTTPS 또는 localhost에서 접속하세요.',true);return false;}return true;}
 function setBusy(value){
- if(value){startQuerySession();$('query-cancel').disabled=false;configureQueryPlatforms({});stopQueryElapsed?.();stopQueryElapsed=startElapsedTime([$('query-elapsed'),$('query-popup-elapsed')]);}else{finishQuerySession();stopQueryElapsed?.();stopQueryElapsed=null;}
+ if(value){startApiTrace({mode:$('query-mode').value});startQuerySession();$('query-cancel').disabled=false;configureQueryPlatforms({});stopQueryElapsed?.();stopQueryElapsed=startElapsedTime([$('query-elapsed'),$('query-popup-elapsed')]);}else{finishQuerySession();stopQueryElapsed?.();stopQueryElapsed=null;}
  if(value){overlayRequest=['dashboard','weekly','monthly','orders','erp'].some(id=>!$(id).hidden);pendingQueryNotice=null;if(overlayRequest){clearTimeout(noticeTimer);$('notice').hidden=true;$('query-popup-bar').value=0;$('query-popup-percent').textContent='0%';$('query-popup-detail').textContent='선택 기간의 데이터를 확인하고 있습니다.';document.body.classList.add('query-overlay-active');if(!$('query-progress-dialog').open)$('query-progress-dialog').showModal();}}
  busy=value;for(const id of ['vendor','access','secret','naver-client','naver-secret','naver-account','naver-test','forget','naver-forget'])$(id).disabled=value;document.querySelectorAll('#credentials button,#naver-credentials button').forEach(button=>button.disabled=value);for(const id of ['fetch-orders','dashboard-refresh','dashboard-range','orders-range','weekly-refresh','monthly-refresh','weekly-anchor','monthly-anchor','query-mode','erp-load','row-platform','orders-export','rg-query-api','rg-order-id','rg-view-mode'])$(id).disabled=value;
  $('fetch-orders').textContent=value?'조회 중…':'주문 조회 →';$('dashboard-refresh').textContent=value?'조회 중…':'매출 조회';
@@ -363,8 +365,10 @@ initializeNaverCases({access:naverAccess,request:naverRequest,notice,today,isBus
 if(sharedSettings.enabled){
  for(const el of document.querySelectorAll('#erp-pane-codes p.hint,#mapping p.hint,#master-count')){if(el.childElementCount===0)el.textContent=el.textContent.replaceAll('수정 즉시 이 브라우저에 저장됩니다.','Enter 또는 다른 행 클릭 시 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영됩니다.').replaceAll('저장한 규칙은 현재 브라우저에서 적용되며','매핑 저장 버튼으로 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영되며').replaceAll('이 브라우저에 저장','공유 DB에 설정 저장');}
 }
+configureApiTrace(platform=>({source:sharedSettings.enabled?'공유 DB 서버 인증':'브라우저 설정',key:sharedSettings.enabled?'':$(platform==='네이버'?'naver-client':'access').value.trim(),vendor:$(platform==='네이버'?'naver-account':'vendor').value.trim()}));
+initializeDialogDismiss();
 initializeOperationalWorkspace();
-initializeOrdersJson({getRows:visibleRows,getContext:()=>({platform:channelName(source),from:$('from').value,to:$('to').value})});
+initializeOrdersJson({getRows:visibleRows,getTrace:()=>apiTraceReport(channelName(source)),getContext:()=>({platform:channelName(source),from:$('from').value,to:$('to').value})});
 
 let credentialsDirty=false;
 for(const id of ['credentials','naver-credentials']){const form=$(id);form.addEventListener('input',()=>{credentialsDirty=true;});form.addEventListener('submit',()=>{credentialsDirty=false;});}

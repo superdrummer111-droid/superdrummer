@@ -46,7 +46,7 @@ test('중계 서버는 목록 경로와 날짜 및 nextToken을 쿠팡으로 전
  try{
   const auth=await authorization('test-access','test-secret','/test','');
   const response=await fetch(`http://127.0.0.1:${server.address().port}/api/coupang`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:'/v2/providers/rg_open_api/apis/api/v1/vendors/A123/rg/orders',query:'paidDateFrom=20261001&paidDateTo=20261030&nextToken=abc',authorization:auth})});
-  assert.equal(response.status,200);assert.match(requested.url,/api-gateway.coupang.com\/v2\/providers\/rg_open_api\/apis\/api\/v1\/vendors\/A123\/rg\/orders\?paidDateFrom=20261001&paidDateTo=20261030&nextToken=abc$/);assert.equal(requested.options.headers.Authorization,auth);assert.equal((await response.json()).nextToken,'next');
+  assert.equal(response.status,200);assert.equal(decodeURIComponent(response.headers.get('x-api-key-id')),'test••••cess');assert.match(requested.url,/api-gateway.coupang.com\/v2\/providers\/rg_open_api\/apis\/api\/v1\/vendors\/A123\/rg\/orders\?paidDateFrom=20261001&paidDateTo=20261030&nextToken=abc$/);assert.equal(requested.options.headers.Authorization,auth);assert.equal((await response.json()).nextToken,'next');
  }finally{await new Promise(r=>server.close(r))}
 });
 

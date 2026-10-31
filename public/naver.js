@@ -1,3 +1,4 @@
+import {tracedApiFetch} from './api-trace.js';
 import {mapLimit} from './fetching.js';
 import {querySignal} from './query-session.js';
 import {validateRange,splitDateRanges,paymentDate,rawOrderFields,parseApiJson} from './core.js';
@@ -20,4 +21,4 @@ export async function fetchNaverOrders(api,{from,to,basis='PAYED_DATETIME',onPro
  return {records:[...new Map(batches.flat().map(entry=>[String(entry.productOrder.productOrderId),entry])).values()],requests};
 }
 export function naverRawLabels(row){return rawOrderFields(row)}
-export async function naverRequest(input){const response=await fetch('/api/naver',{method:'POST',headers:{'Content-Type':'application/json'},signal:querySignal(),body:JSON.stringify(input)});const text=await response.text();let data;try{data=parseApiJson(text)}catch{throw Error('네이버 API 응답 형식을 확인하세요. HTTP '+response.status);}if(!response.ok){const error=Error('네이버 API '+response.status+': '+(data.message||'요청 실패'));error.status=response.status;error.response=data;const retry=response.headers.get('retry-after');error.retryAfter=retry?(Number(retry)*1000||Math.max(0,Date.parse(retry)-Date.now())):0;error.retryable=[429,502,503,504].includes(response.status);throw error;}return data;}
+export async function naverRequest(input){const response=await (input.action==='token'?fetch:tracedApiFetch)('/api/naver',{method:'POST',headers:{'Content-Type':'application/json'},signal:querySignal(),body:JSON.stringify(input)},{platform:'네이버',action:input.action,params:input.params||{}});const text=await response.text();let data;try{data=parseApiJson(text)}catch{throw Error('네이버 API 응답 형식을 확인하세요. HTTP '+response.status);}if(!response.ok){const error=Error('네이버 API '+response.status+': '+(data.message||'요청 실패'));error.status=response.status;error.response=data;const retry=response.headers.get('retry-after');error.retryAfter=retry?(Number(retry)*1000||Math.max(0,Date.parse(retry)-Date.now())):0;error.retryable=[429,502,503,504].includes(response.status);throw error;}return data;}
