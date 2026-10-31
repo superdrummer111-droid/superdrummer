@@ -42,8 +42,15 @@ export function rawOrderSummary(rows){const currencies=new Map(),orders=new Set(
 export function orderSummary(rows){const currencies=new Map(),rawCurrencies=new Map();for(const row of rows){const total=currencies.get(row.currency)||{quantity:0,revenue:0};total.quantity+=row.quantity;total.revenue+=row.revenue;currencies.set(row.currency,total);if(row.platform==='마켓플레이스'){const raw=rawCurrencies.get(row.currency)||{orderAmount:0,discountAmount:0};raw.orderAmount+=row.orderAmount??0;raw.discountAmount+=row.discountAmount??0;rawCurrencies.set(row.currency,raw)}}return {rawCurrencies,rows:rows.length,orders:new Set(rows.map(row=>JSON.stringify([row.platform,row.orderId]))).size,shipments:new Set(rows.filter(row=>row.shipmentBoxId).map(row=>JSON.stringify([row.platform,row.shipmentBoxId]))).size,currencies};}
 export function rocketListPath(vendorId){if(!/^[A-Za-z0-9_-]+$/.test(vendorId))throw new Error('판매자 ID를 확인하세요.');return `/v2/providers/rg_open_api/apis/api/v1/vendors/${vendorId}/rg/orders`;}
 export function rocketDateRanges(from,to){return splitDateRanges(from,to,30).map(range=>({paidDateFrom:range.from.replaceAll('-',''),paidDateTo:range.to.replaceAll('-','')}));}
-export const ROCKET_TIME_BASIS='utc-to-kst-v1';
-export function rocketKoreaDateRanges(from,to){validateRange(from,to);const utcFrom=new Date(Date.parse(from+'T00:00:00+09:00')).toISOString().slice(0,10),utcTo=new Date(Date.parse(to+'T23:59:59.999+09:00')).toISOString().slice(0,10);return rocketDateRanges(utcFrom,utcTo);}
+export const ROCKET_TIME_BASIS='utc-to-kst-end-buffer-v2';
+export function rocketKoreaDateRanges(from,to){
+ validateRange(from,to);
+ const utcFrom=new Date(Date.parse(from+'T00:00:00+09:00')).toISOString().slice(0,10),utcTo=new Date(Date.parse(to+'T23:59:59.999+09:00')).toISOString().slice(0,10);
+ // Request one extra end day for every segment, including month boundaries.
+ // This covers both inclusive-date and midnight-exclusive provider behavior;
+ // filterRocketKoreaOrders keeps only the selected Korea dates afterwards.
+ return splitDateRanges(utcFrom,utcTo,29).map(range=>({paidDateFrom:range.from.replaceAll('-',''),paidDateTo:new Date(Date.parse(range.to+'T00:00:00Z')+86400000).toISOString().slice(0,10).replaceAll('-','')}));
+}
 export function rocketPaymentTime(value){
  if(value===null||value===undefined||value==='')throw Error('로켓그로스 결제일시가 없습니다.');
  let text=typeof value==='number'||/^\d{13}$/.test(String(value))?paymentTime(Number(value)):String(value).trim().replace(' ','T');

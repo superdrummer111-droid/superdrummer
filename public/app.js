@@ -136,7 +136,7 @@ async function loadRocket(vendor,from,to,{progressEnd=80}={}){
   },count=>notice(`로켓그로스 ${range.paidDateFrom} ~ ${range.paidDateTo} · ${count}개 주문 수신`)),{fresh:requestFresh});
   progress(5+(progressEnd-5)*(index+1)/ranges.length,`로켓그로스 ${index+1}/${ranges.length}구간 수신`,'rg');if(result.hit)queryStats.hits++;orders.push(...result.value);
  }
- return filterRocketKoreaOrders(orders,from,to);
+ return [...new Map(filterRocketKoreaOrders(orders,from,to).map(order=>[JSON.stringify(order),order])).values()];
 }
 function prepareRows(orders,platform){const channel=platform==='로켓그로스'?'rg':'market',discovered=[];
  const prepared=normalize(orders,platform).map(row=>{const raw=JSON.parse(row.raw),sourceColumns=columnsBySource[channel];function flatten(value,prefix){for(const [key,val]of Object.entries(value)){const name=prefix+'.'+key;if(val!==null&&typeof val==='object'&&!Array.isArray(val))flatten(val,name);else{row[name]=typeof val==='object'?JSON.stringify(val):val;if(allowedColumn(name,channel)){if(!sourceColumns.some(c=>c.key===name))sourceColumns.push({key:name,visible:false});if(!discovered.includes(name))discovered.push(name)}}}}flatten(raw.order,'order');flatten(raw.item,'item');return row;});
