@@ -939,3 +939,9 @@ body.sidebar-pinned>main{margin-left:var(--sidebar-expanded)}
  .order-result-controls .actions{justify-content:flex-start}
  .order-result-controls .actions select{max-width:100%}
 }
+
+#orders-json-dialog{width:960px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);padding:18px;border:1px solid #ded4e9;border-radius:14px;box-shadow:0 18px 65px #30223e2a}
+#orders-json-dialog .section-head{flex-wrap:wrap;gap:8px}
+#orders-json-dialog .actions{flex-wrap:wrap}
+#orders-json-text{display:block;width:100%;height:60dvh;min-height:160px;box-sizing:border-box;resize:none;overflow:auto;padding:12px;border:1px solid #e4ddee;border-radius:8px;background:#f8f7fc;color:#253149;font:12px/1.6 ui-monospace,monospace;white-space:pre}
+#orders-json-status{font-size:12px;color:#7865a6;min-height:18px;margin-bottom:0}

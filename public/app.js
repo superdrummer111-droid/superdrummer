@@ -1,3 +1,4 @@
+import {initializeOrdersJson} from './orders-json.js';
 import {startQuerySession,finishQuerySession,cancelQuerySession,querySignal,queryWait,assertQueryActive} from './query-session.js';
 import {settingsStorage as localStorage,sharedSettings,initializeSharedSettings,refreshSharedSettings,resumeSettingsUpdates} from './shared-settings.js';
 import {initializeOperationalWorkspace} from './workspace-ui.js';
@@ -363,6 +364,7 @@ if(sharedSettings.enabled){
  for(const el of document.querySelectorAll('#erp-pane-codes p.hint,#mapping p.hint,#master-count')){if(el.childElementCount===0)el.textContent=el.textContent.replaceAll('수정 즉시 이 브라우저에 저장됩니다.','Enter 또는 다른 행 클릭 시 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영됩니다.').replaceAll('저장한 규칙은 현재 브라우저에서 적용되며','매핑 저장 버튼으로 공유 DB에 설정이 저장되고 변경 알림을 받은 사용자에게 자동 반영되며').replaceAll('이 브라우저에 저장','공유 DB에 설정 저장');}
 }
 initializeOperationalWorkspace();
+initializeOrdersJson({getRows:visibleRows,getContext:()=>({platform:channelName(source),from:$('from').value,to:$('to').value})});
 
 let credentialsDirty=false;
 for(const id of ['credentials','naver-credentials']){const form=$(id);form.addEventListener('input',()=>{credentialsDirty=true;});form.addEventListener('submit',()=>{credentialsDirty=false;});}
